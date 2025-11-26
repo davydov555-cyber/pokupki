@@ -204,7 +204,7 @@
 
   <div class="input-block">
     <div class="row">
-      <input id="item-input" type="text" placeholder="Например: молоко, хлеб, сыр" />
+      <input id="item-input" type="text" placeholder="Например: молоко хлеб картошка" />
       <button id="add-btn" class="btn-add" disabled>Добавить</button>
     </div>
     <div class="row">
@@ -228,7 +228,6 @@
 
 <script>
   const STORAGE_KEY = 'pokupki-items-v1';
-
   let items = [];
 
   function loadItems() {
@@ -251,25 +250,30 @@
     } catch (e) {}
   }
 
-  // 🔵 УЛУЧШЕННАЯ ФУНКЦИЯ: РАБОТАЕТ ДАЖЕ БЕЗ ЗАПЯТЫХ
+  // Разбиваем строку на товары
   function splitToItems(text) {
     if (!text) return [];
 
-    const normalized = text
-      .toLowerCase()
+    let normalized = text.toLowerCase();
+
+    // превращаем "новая строка" и т.п. в перенос строки
+    normalized = normalized
       .replace(/новая строка/g, '\n')
       .replace(/следующая строка/g, '\n')
       .replace(/следующий пункт/g, '\n')
       .replace(/следующий/g, '\n')
       .replace(/enter/g, '\n');
 
-    // Пытаемся делить нормально
+    // убираем точки и прочее, чтобы "мука." стало "мука"
+    normalized = normalized.replace(/[.!?]/g, ' ');
+
+    // сначала пробуем нормальные разделители
     let parts = normalized
       .split(/[,;\n]/)
       .map(p => p.trim())
       .filter(p => p.length > 0);
 
-    // Если получилось 1 слово — включаем РЕЖИМ "каждое слово — товар"
+    // если всё равно одна строка — делим по пробелам
     if (parts.length <= 1) {
       parts = normalized
         .split(/\s+/)
@@ -360,7 +364,7 @@
     });
   }
 
-  // 🔵 ГОЛОСОВОЙ ВВОД
+  // РАСПОЗНАВАНИЕ РЕЧИ (кнопка "Диктовать")
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -370,64 +374,41 @@
     const statusEl = document.getElementById('status');
 
     if (!SpeechRecognition) {
+      // На устройствах без Web Speech API (например, iPhone) просто используем
+      // микрофон клавиатуры — текст попадёт в поле, а дальше нажимаем "Добавить".
       micBtn.style.display = 'none';
-      statusEl.textContent = 'Голосовой ввод не поддерживается этим браузером.';
+      statusEl.textContent = 'Можно диктовать через микрофон на клавиатуре.';
       return;
     }
 
     recognition = new SpeechRecognition();
     recognition.lang = 'ru-RU';
-    recognition.intertrimResults = true;
+    recognition.interimResults = false; // важно! только финальный результат
     recognition.maxAlternatives = 1;
 
     micBtn.style.display = 'inline-flex';
-
-    let finalTranscript = '';
 
     recognition.onstart = () => {
       isListening = true;
       micBtn.classList.add('active');
       document.querySelector('.mic-text').textContent = 'Слушаю...';
-      statusEl.textContent = 'Говори товары: "молоко хлеб картошка"';
-      finalTranscript = '';
+      statusEl.textContent = 'Скажи: "колбаса хлеб сыр мука"...';
     };
 
-    recognition.onresult = event => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interim += transcript;
-        }
-      }
-      statusEl.textContent = 'Распознано: ' + (finalTranscript || interim);
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      statusEl.textContent = 'Распознано: ' + transcript;
+      addItemsFromText(transcript);
     };
 
-    recognition.onerror = event => {
+    recognition.onerror = (event) => {
       statusEl.textContent = 'Ошибка распознавания: ' + event.error;
-      isListening = false;
-      micBtn.classList.remove('active');
-      document.querySelector('.mic-text').textContent = 'Диктовать';
     };
 
     recognition.onend = () => {
+      isListening = false;
       micBtn.classList.remove('active');
       document.querySelector('.mic-text').textContent = 'Диктовать';
-      isListening = false;
-
-      if (finalTranscript.trim().length > 0) {
-        const parts = splitToItems(finalTranscript);
-        if (parts.length > 0) {
-          addItemsFromText(finalTranscript);
-          statusEl.textContent = 'Добавлено: ' + parts.join(', ');
-        } else {
-          statusEl.textContent = 'Ничего не распознано.';
-        }
-      } else {
-        statusEl.textContent = 'Ничего не распознано.';
-      }
     };
 
     micBtn.addEventListener('click', () => {
@@ -440,7 +421,6 @@
     });
   }
 
-  // 🔵 ЗАГРУЗКА
   window.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('item-input');
     const addBtn = document.getElementById('add-btn');
@@ -458,7 +438,7 @@
 
     input.addEventListener('input', updateAddButtonState);
 
-    input.addEventListener('keydown', e => {
+    input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (!addBtn.disabled) {
