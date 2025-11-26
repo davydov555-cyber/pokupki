@@ -110,6 +110,17 @@
       height: 8px;
       border-radius: 50%;
       background: #dc3545;
+      animation: blink 1s infinite;
+    }
+
+    .btn-mic:not(.active) .mic-dot {
+      animation: none;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.2; }
+      100% { opacity: 1; }
     }
 
     .status {
@@ -256,7 +267,6 @@
 
     let normalized = text.toLowerCase();
 
-    // превращаем "новая строка" и т.п. в перенос строки
     normalized = normalized
       .replace(/новая строка/g, '\n')
       .replace(/следующая строка/g, '\n')
@@ -264,16 +274,16 @@
       .replace(/следующий/g, '\n')
       .replace(/enter/g, '\n');
 
-    // убираем точки и прочее, чтобы "мука." стало "мука"
+    // убираем точки/знаки, чтобы "мука." стало "мука"
     normalized = normalized.replace(/[.!?]/g, ' ');
 
-    // сначала пробуем нормальные разделители
+    // сначала — по нормальным разделителям
     let parts = normalized
       .split(/[,;\n]/)
       .map(p => p.trim())
       .filter(p => p.length > 0);
 
-    // если всё равно одна строка — делим по пробелам
+    // если получилось мало — по словам
     if (parts.length <= 1) {
       parts = normalized
         .split(/\s+/)
@@ -364,18 +374,17 @@
     });
   }
 
-  // РАСПОЗНАВАНИЕ РЕЧИ (кнопка "Диктовать")
+  // РАСПОЗНАВАНИЕ РЕЧИ + ЖИВОЙ ТЕКСТ
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
+  let currentTranscript = '';
 
   function initSpeech() {
     const micBtn = document.getElementById('mic-btn');
     const statusEl = document.getElementById('status');
 
     if (!SpeechRecognition) {
-      // На устройствах без Web Speech API (например, iPhone) просто используем
-      // микрофон клавиатуры — текст попадёт в поле, а дальше нажимаем "Добавить".
       micBtn.style.display = 'none';
       statusEl.textContent = 'Можно диктовать через микрофон на клавиатуре.';
       return;
@@ -383,22 +392,28 @@
 
     recognition = new SpeechRecognition();
     recognition.lang = 'ru-RU';
-    recognition.interimResults = false; // важно! только финальный результат
+    recognition.interimResults = true;   // показываем текст во время речи
     recognition.maxAlternatives = 1;
 
     micBtn.style.display = 'inline-flex';
 
     recognition.onstart = () => {
       isListening = true;
+      currentTranscript = '';
       micBtn.classList.add('active');
       document.querySelector('.mic-text').textContent = 'Слушаю...';
-      statusEl.textContent = 'Скажи: "колбаса хлеб сыр мука"...';
+      statusEl.textContent = 'Говори: "колбаса хлеб сыр мука"...';
     };
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      statusEl.textContent = 'Распознано: ' + transcript;
-      addItemsFromText(transcript);
+      let text = '';
+      for (let i = 0; i < event.results.length; i++) {
+        text += event.results[i][0].transcript + ' ';
+        if (event.results[i].isFinal) {
+          currentTranscript = text;
+        }
+      }
+      statusEl.textContent = 'Распознаю: ' + text.trim();
     };
 
     recognition.onerror = (event) => {
@@ -406,9 +421,17 @@
     };
 
     recognition.onend = () => {
-      isListening = false;
       micBtn.classList.remove('active');
       document.querySelector('.mic-text').textContent = 'Диктовать';
+      isListening = false;
+
+      const finalText = (currentTranscript || '').trim();
+      if (finalText.length > 0) {
+        addItemsFromText(finalText);
+        statusEl.textContent = 'Добавлено: ' + finalText;
+      } else {
+        statusEl.textContent = 'Ничего не распознано.';
+      }
     };
 
     micBtn.addEventListener('click', () => {
