@@ -91,41 +91,30 @@
       cursor: default;
     }
 
-    .btn-mic {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeeba;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-mic.active {
-      background: #ffecb5;
-      border-color: #ffdd57;
-    }
-
-    .mic-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #dc3545;
-      animation: blink 1s infinite;
-    }
-
-    .btn-mic:not(.active) .mic-dot {
-      animation: none;
-    }
-
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0.2; }
-      100% { opacity: 1; }
-    }
-
-    .status {
+    .hint {
       font-size: 12px;
       color: #666;
+      padding: 0 4px;
+    }
+
+    .quick-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .quick-btn {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #dde;
+      background: #f5f7ff;
+      color: #334;
+    }
+
+    .quick-btn:hover {
+      background: #e4e8ff;
     }
 
     .list {
@@ -210,7 +199,7 @@
 <div class="app">
   <header>
     <h1>Список покупок</h1>
-    <p>Добавляй продукты вручную или голосом. Список хранится только у тебя на телефоне.</p>
+    <p>Добавляй продукты вручную или голосом — через кнопку 🎤 на клавиатуре.</p>
   </header>
 
   <div class="input-block">
@@ -218,12 +207,13 @@
       <input id="item-input" type="text" placeholder="Например: молоко хлеб картошка" />
       <button id="add-btn" class="btn-add" disabled>Добавить</button>
     </div>
-    <div class="row">
-      <button id="mic-btn" class="btn-mic" style="display:none;">
-        <span class="mic-dot"></span>
-        <span class="mic-text">Диктовать</span>
-      </button>
-      <span id="status" class="status"></span>
+
+    <div class="hint">
+      👉 Для голосового ввода нажмите кнопку 🎤 на клавиатуре телефона
+    </div>
+
+    <div class="quick-items" id="quick-items">
+      <!-- Кнопки быстрых товаров будут добавлены из JS -->
     </div>
   </div>
 
@@ -240,6 +230,18 @@
 <script>
   const STORAGE_KEY = 'pokupki-items-v1';
   let items = [];
+
+  // Небольшой "умный" список популярных товаров
+  const QUICK_ITEMS = [
+    'Молоко',
+    'Хлеб',
+    'Яйца',
+    'Картошка',
+    'Куриное филе',
+    'Масло',
+    'Сыр',
+    'Помидоры'
+  ];
 
   function loadItems() {
     try {
@@ -267,15 +269,15 @@
 
     let normalized = text.toLowerCase();
 
+    // убираем точки/знаки, чтобы "мука." стало "мука"
+    normalized = normalized.replace(/[.!?]/g, ' ');
+
     normalized = normalized
       .replace(/новая строка/g, '\n')
       .replace(/следующая строка/g, '\n')
       .replace(/следующий пункт/g, '\n')
       .replace(/следующий/g, '\n')
       .replace(/enter/g, '\n');
-
-    // убираем точки/знаки, чтобы "мука." стало "мука"
-    normalized = normalized.replace(/[.!?]/g, ' ');
 
     // сначала — по нормальным разделителям
     let parts = normalized
@@ -305,6 +307,18 @@
         bought: false
       });
     }
+    saveItems();
+    renderList();
+  }
+
+  function addSingleItem(name) {
+    const clean = (name || '').trim();
+    if (!clean) return;
+    items.push({
+      id: Date.now().toString() + Math.random().toString(16).slice(2),
+      name: clean,
+      bought: false
+    });
     saveItems();
     renderList();
   }
@@ -374,89 +388,29 @@
     });
   }
 
-  // РАСПОЗНАВАНИЕ РЕЧИ + ЖИВОЙ ТЕКСТ
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition = null;
-  let isListening = false;
-  let currentTranscript = '';
-
-  function initSpeech() {
-    const micBtn = document.getElementById('mic-btn');
-    const statusEl = document.getElementById('status');
-
-    if (!SpeechRecognition) {
-      micBtn.style.display = 'none';
-      statusEl.textContent = 'Можно диктовать через микрофон на клавиатуре.';
-      return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'ru-RU';
-    recognition.interimResults = true;   // показываем текст во время речи
-    recognition.maxAlternatives = 1;
-
-    micBtn.style.display = 'inline-flex';
-
-    recognition.onstart = () => {
-      isListening = true;
-      currentTranscript = '';
-      micBtn.classList.add('active');
-      document.querySelector('.mic-text').textContent = 'Слушаю...';
-      statusEl.textContent = 'Говори: "колбаса хлеб сыр мука"...';
-    };
-
-    recognition.onresult = (event) => {
-      let text = '';
-      for (let i = 0; i < event.results.length; i++) {
-        text += event.results[i][0].transcript + ' ';
-        if (event.results[i].isFinal) {
-          currentTranscript = text;
-        }
-      }
-      statusEl.textContent = 'Распознаю: ' + text.trim();
-    };
-
-    recognition.onerror = (event) => {
-      statusEl.textContent = 'Ошибка распознавания: ' + event.error;
-    };
-
-    recognition.onend = () => {
-      micBtn.classList.remove('active');
-      document.querySelector('.mic-text').textContent = 'Диктовать';
-      isListening = false;
-
-      const finalText = (currentTranscript || '').trim();
-      if (finalText.length > 0) {
-        addItemsFromText(finalText);
-        statusEl.textContent = 'Добавлено: ' + finalText;
-      } else {
-        statusEl.textContent = 'Ничего не распознано.';
-      }
-    };
-
-    micBtn.addEventListener('click', () => {
-      if (!recognition) return;
-      if (!isListening) {
-        try { recognition.start(); } catch (e) {}
-      } else {
-        recognition.stop();
-      }
+  function renderQuickItems() {
+    const container = document.getElementById('quick-items');
+    container.innerHTML = '';
+    QUICK_ITEMS.forEach(name => {
+      const btn = document.createElement('button');
+      btn.className = 'quick-btn';
+      btn.textContent = name;
+      btn.addEventListener('click', () => addSingleItem(name));
+      container.appendChild(btn);
     });
   }
 
+  // Старт
   window.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('item-input');
     const addBtn = document.getElementById('add-btn');
-    const clearBoughtBtn = document.getElementById('clear-bought-btn');
-    const clearAllBtn = document.getElementById('clear-all-btn');
 
     loadItems();
     renderList();
-    initSpeech();
+    renderQuickItems();
 
     function updateAddButtonState() {
-      const hasText = input.value.trim().length > 0;
-      addBtn.disabled = !hasText;
+      addBtn.disabled = input.value.trim().length === 0;
     }
 
     input.addEventListener('input', updateAddButtonState);
@@ -478,8 +432,11 @@
       updateAddButtonState();
     });
 
-    clearBoughtBtn.addEventListener('click', clearBought);
-    clearAllBtn.addEventListener('click', clearAll);
+    document.getElementById('clear-bought-btn')
+      .addEventListener('click', clearBought);
+
+    document.getElementById('clear-all-btn')
+      .addEventListener('click', clearAll);
   });
 </script>
 </body>
