@@ -251,7 +251,7 @@
     } catch (e) {}
   }
 
-  // 🔵 ФУНКЦИЯ ДЛЯ РАЗБИЕНИЯ ТЕКСТА НА ТОВАРЫ
+  // 🔵 УЛУЧШЕННАЯ ФУНКЦИЯ: РАБОТАЕТ ДАЖЕ БЕЗ ЗАПЯТЫХ
   function splitToItems(text) {
     if (!text) return [];
 
@@ -263,10 +263,21 @@
       .replace(/следующий/g, '\n')
       .replace(/enter/g, '\n');
 
-    return normalized
-      .split(/[,;\n]/)  
+    // Пытаемся делить нормально
+    let parts = normalized
+      .split(/[,;\n]/)
       .map(p => p.trim())
       .filter(p => p.length > 0);
+
+    // Если получилось 1 слово — включаем РЕЖИМ "каждое слово — товар"
+    if (parts.length <= 1) {
+      parts = normalized
+        .split(/\s+/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+    }
+
+    return parts;
   }
 
   function addItemsFromText(text) {
@@ -366,7 +377,7 @@
 
     recognition = new SpeechRecognition();
     recognition.lang = 'ru-RU';
-    recognition.interimResults = true;
+    recognition.intertrimResults = true;
     recognition.maxAlternatives = 1;
 
     micBtn.style.display = 'inline-flex';
@@ -377,7 +388,7 @@
       isListening = true;
       micBtn.classList.add('active');
       document.querySelector('.mic-text').textContent = 'Слушаю...';
-      statusEl.textContent = 'Говори продукты: "молоко новая строка хлеб новая строка сыр"';
+      statusEl.textContent = 'Говори товары: "молоко хлеб картошка"';
       finalTranscript = '';
     };
 
@@ -412,9 +423,9 @@
           addItemsFromText(finalTranscript);
           statusEl.textContent = 'Добавлено: ' + parts.join(', ');
         } else {
-          statusEl.textContent = 'Ничего не распознано как товары.';
+          statusEl.textContent = 'Ничего не распознано.';
         }
-      } else if (!statusEl.textContent.startsWith('Ошибка')) {
+      } else {
         statusEl.textContent = 'Ничего не распознано.';
       }
     };
@@ -422,15 +433,14 @@
     micBtn.addEventListener('click', () => {
       if (!recognition) return;
       if (!isListening) {
-        try {
-          recognition.start();
-        } catch (e) {}
+        try { recognition.start(); } catch (e) {}
       } else {
         recognition.stop();
       }
     });
   }
 
+  // 🔵 ЗАГРУЗКА
   window.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('item-input');
     const addBtn = document.getElementById('add-btn');
