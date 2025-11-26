@@ -251,28 +251,22 @@
     } catch (e) {}
   }
 
-  // 🔹 Разбиваем текст на отдельные товары.
-  // Работают:
-  // - запятая
-  // - точка с запятой
-  // - перенос строки
-  // - слова "новая строка", "следующая строка", "следующий", "enter"
+  // 🔵 ФУНКЦИЯ ДЛЯ РАЗБИЕНИЯ ТЕКСТА НА ТОВАРЫ
   function splitToItems(text) {
     if (!text) return [];
 
     const normalized = text
-      .replace(/новая строка/gi, '\n')
-      .replace(/следующая строка/gi, '\n')
-      .replace(/следующий пункт/gi, '\n')
-      .replace(/следующий/gi, '\n')
-      .replace(/enter/gi, '\n');
+      .toLowerCase()
+      .replace(/новая строка/g, '\n')
+      .replace(/следующая строка/g, '\n')
+      .replace(/следующий пункт/g, '\n')
+      .replace(/следующий/g, '\n')
+      .replace(/enter/g, '\n');
 
-    const parts = normalized
-      .split(/[,;\n]/)
+    return normalized
+      .split(/[,;\n]/)  
       .map(p => p.trim())
       .filter(p => p.length > 0);
-
-    return parts;
   }
 
   function addItemsFromText(text) {
@@ -355,6 +349,7 @@
     });
   }
 
+  // 🔵 ГОЛОСОВОЙ ВВОД
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -382,7 +377,7 @@
       isListening = true;
       micBtn.classList.add('active');
       document.querySelector('.mic-text').textContent = 'Слушаю...';
-      statusEl.textContent = 'Говори продукты: "молоко новая строка хлеб новая строка сыр"...';
+      statusEl.textContent = 'Говори продукты: "молоко новая строка хлеб новая строка сыр"';
       finalTranscript = '';
     };
 
