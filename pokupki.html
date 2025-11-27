@@ -182,13 +182,32 @@ button {
     color: #383d41;
 }
 
+/* компактный блок ввода */
 .input-block {
-    padding: 8px 16px 10px;
+    padding: 6px 12px 10px;
     border-top: 1px solid #eee;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
     background: #ffffff;
+}
+
+.mode-toggle {
+    display: inline-flex;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.mode-btn {
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    background: #f7f7f7;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.mode-btn.active {
+    background: #4a90e2;
+    color: #fff;
+    border-color: #4a90e2;
 }
 
 .row {
@@ -210,9 +229,9 @@ input[type="text"]:focus {
 }
 
 .hint {
-    font-size: 12px;
+    font-size: 11px;
     color: #666;
-    padding: 0 4px;
+    padding: 2px 4px 0;
 }
 
 .overlay {
@@ -383,23 +402,18 @@ input[type="text"]:focus {
         <button id="clear-all-btn" class="btn-clear-all">Clear all</button>
     </div>
 
+    <!-- один компактный блок: режим ✍️ / 🎤 + одно поле ввода -->
     <div class="input-block">
-        <!-- Ручной ввод (без таймера) -->
-        <div class="row">
-            <input id="manual-input" type="text" placeholder="Milk bread eggs" />
-            <button id="add-manual-btn" class="btn-primary">+</button>
+        <div class="mode-toggle">
+            <button type="button" class="mode-btn active" data-mode="manual" id="mode-manual">✍️</button>
+            <button type="button" class="mode-btn" data-mode="voice" id="mode-voice">🎤</button>
         </div>
-        <div class="hint" id="hint-manual-text">
-            This field is for manual typing.
-        </div>
-
-        <!-- Поле для диктовки / голосового ввода (с таймером) -->
         <div class="row">
-            <input id="item-input" type="text" placeholder="Dictate here" />
+            <input id="item-input" type="text" placeholder="Milk bread eggs" />
             <button id="add-btn" class="btn-primary" disabled>+</button>
         </div>
         <div class="hint" id="hint-text">
-            Tap 🎤 on keyboard for voice input. Items will be added automatically after a pause.
+            <!-- текст подставляем из переводов -->
         </div>
     </div>
 </div>
@@ -483,9 +497,11 @@ let currentUser = null;
 let currentFamilyCode = null;
 let itemsMap = {};
 let autoAddTimer = null;
+let currentMode = 'manual'; // 'manual' или 'voice'
 
 const $ = id => document.getElementById(id);
 
+// === словарь продуктов, добавлены новые фразы ===
 const productDictionary = {
     "молоко": { ru: "молоко", en: "milk", fi: "maito" },
     "milk": { ru: "молоко", en: "milk", fi: "maito" },
@@ -494,6 +510,16 @@ const productDictionary = {
     "хлеб": { ru: "хлеб", en: "bread", fi: "leipä" },
     "bread": { ru: "хлеб", en: "bread", fi: "leipä" },
     "leipä": { ru: "хлеб", en: "bread", fi: "leipä" },
+
+    "черный хлеб": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
+    "чёрный хлеб": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
+    "black bread": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
+    "dark bread": { ru: "чёрный хлеб", en: "dark bread", fi: "ruisleipä" },
+    "ruisleipä": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
+
+    "белый хлеб": { ru: "белый хлеб", en: "white bread", fi: "vaalea leipä" },
+    "white bread": { ru: "белый хлеб", en: "white bread", fi: "vaalea leipä" },
+    "vaalea leipä": { ru: "белый хлеб", en: "white bread", fi: "vaalea leipä" },
 
     "яйца": { ru: "яйца", en: "eggs", fi: "munat" },
     "egg": { ru: "яйца", en: "eggs", fi: "munat" },
@@ -515,6 +541,14 @@ const productDictionary = {
     "chicken":{ ru: "курица", en: "chicken", fi: "kana" },
     "kana": { ru: "курица", en: "chicken", fi: "kana" },
 
+    "куриное филе": { ru: "куриное филе", en: "chicken fillet", fi: "kanan filee" },
+    "chicken fillet": { ru: "куриное филе", en: "chicken fillet", fi: "kanan filee" },
+    "kanan filee": { ru: "куриное филе", en: "chicken fillet", fi: "kanan filee" },
+
+    "филе рыбы": { ru: "филе рыбы", en: "fish fillet", fi: "kalafilee" },
+    "fish fillet": { ru: "филе рыбы", en: "fish fillet", fi: "kalafilee" },
+    "kalafilee": { ru: "филе рыбы", en: "fish fillet", fi: "kalafilee" },
+
     "сыр": { ru: "сыр", en: "cheese", fi: "juusto" },
     "cheese": { ru: "сыр", en: "cheese", fi: "juusto" },
     "juusto": { ru: "сыр", en: "cheese", fi: "juusto" },
@@ -534,10 +568,10 @@ const translations = {
     ru: {
         appTitle: 'Shopping App',
         headerSubtitle: 'Общий список покупок для семьи.',
-        placeholderManual: 'Например: молоко хлеб картошка',
+        placeholderManual: 'Например: чёрный хлеб молоко картошка',
         placeholderVoice: 'Продиктуй: молоко хлеб картошка',
-        hintManual: 'Это поле для ручного ввода. Само по таймеру ничего не добавляется.',
-        hintVoice: 'Это поле удобно для диктовки через 🎤 на клавиатуре. После небольшой паузы продукты добавятся автоматически.',
+        hintManual: 'Режим ✍️ — всё, что набрал вручную, добавляется только по кнопке или Enter.',
+        hintVoice: 'Режим 🎤 — удобно диктовать через микрофон клавиатуры, после паузы товары добавятся сами.',
         addButton: 'Добавить',
         clearBought: 'Очистить купленные',
         clearAll: 'Очистить всё',
@@ -560,10 +594,10 @@ const translations = {
     en: {
         appTitle: 'Shopping App',
         headerSubtitle: 'Shared shopping list for your family.',
-        placeholderManual: 'Example: milk bread potatoes',
+        placeholderManual: 'Example: black bread milk potatoes',
         placeholderVoice: 'Dictate: milk bread potatoes',
-        hintManual: 'This field is for manual typing. Nothing is added automatically.',
-        hintVoice: 'Use this field with 🎤 on the keyboard. After a short pause, items will be added automatically.',
+        hintManual: 'Mode ✍️ — manual typing, items are added only by button or Enter.',
+        hintVoice: 'Mode 🎤 — use keyboard mic, after a short pause items will be added automatically.',
         addButton: 'Add',
         clearBought: 'Clear bought',
         clearAll: 'Clear all',
@@ -586,10 +620,10 @@ const translations = {
     fi: {
         appTitle: 'Shopping App',
         headerSubtitle: 'Yhteinen ostoslista perheelle.',
-        placeholderManual: 'Esim: maito leipä perunat',
+        placeholderManual: 'Esim: ruisleipä maito perunat',
         placeholderVoice: 'Sanele: maito leipä perunat',
-        hintManual: 'Tähän kirjoitat käsin. Mitään ei lisätä automaattisesti.',
-        hintVoice: 'Tätä kenttää voi käyttää puheelle 🎤-näppäimellä. Pienen tauon jälkeen tuotteet lisätään automaattisesti.',
+        hintManual: 'Tila ✍️ — käsin kirjoitus, tuotteet lisätään vain napilla tai Enterillä.',
+        hintVoice: 'Tila 🎤 — käytä näppäimistön mikkiä, pienen tauon jälkeen tuotteet lisätään automaattisesti.',
         addButton: 'Lisää',
         clearBought: 'Poista ostetut',
         clearAll: 'Tyhjennä lista',
@@ -624,23 +658,19 @@ function generateFamilyCode() {
     return code;
 }
 
+function updateHintAndPlaceholder() {
+    const dict = translations[currentLang] || translations.en;
+    $('item-input').placeholder = currentMode === 'manual' ? dict.placeholderManual : dict.placeholderVoice;
+    $('hint-text').textContent = currentMode === 'manual' ? dict.hintManual : dict.hintVoice;
+}
+
 function applyTranslations() {
     const dict = translations[currentLang] || translations.en;
     $('title-text').textContent = dict.appTitle;
     $('subtitle-text').textContent = dict.headerSubtitle;
-
-    $('manual-input').placeholder = dict.placeholderManual;
-    $('item-input').placeholder = dict.placeholderVoice;
-
-    $('hint-manual-text').textContent = dict.hintManual;
-    $('hint-text').textContent = dict.hintVoice;
-
-    $('add-manual-btn').textContent = dict.addButton;
     $('add-btn').textContent = dict.addButton;
-
     $('clear-bought-btn').textContent = dict.clearBought;
     $('clear-all-btn').textContent = dict.clearAll;
-
     $('ob-title').textContent = dict.obTitle;
     $('ob-text').textContent = dict.obText;
     $('label-name').textContent = dict.labelName;
@@ -655,6 +685,8 @@ function applyTranslations() {
     if (currentUser) {
         $('user-info').textContent = dict.userInfo(currentUser.name);
     }
+
+    updateHintAndPlaceholder();
 }
 
 function getDisplayNameForItem(item) {
@@ -738,11 +770,12 @@ function renderList() {
         listEl.appendChild(li);
     });
 }
+
+// разделяем строку на товары
 function splitToItems(text) {
     if (!text) return [];
     let normalized = text;
 
-    // Голосовые команды: "новая строка", "запятая" и т.п.
     normalized = normalized
         .replace(/новая строка/gi, '\n')
         .replace(/следующая строка/gi, '\n')
@@ -753,22 +786,21 @@ function splitToItems(text) {
         .replace(/comma/gi, ',')
         .replace(/\sи\s/gi, ','); // "куриные крылышки и молоко и хлеб"
 
-    // 1) режем сразу по ПРОБЕЛАМ, запятым и переводам строки
+    // режем по пробелам, запятым и переводам строки
     const words = normalized
-        .split(/[\s,;\n]+/)      // ← тут и пробелы, и запятые, и ; и Enter
+        .split(/[\s,;\n]+/)
         .map(w => w.trim())
         .filter(Boolean);
 
     if (words.length === 0) return [];
 
-    // 2) Склеиваем фразы из 2–3 слов, если они есть в словаре (куриные крылышки и т.п.)
     const result = [];
     let i = 0;
 
     while (i < words.length) {
         let used = false;
 
-        // 3-словные комбинации
+        // 3 слова
         if (i + 2 < words.length) {
             const threeKey = (words[i] + ' ' + words[i+1] + ' ' + words[i+2]).toLowerCase();
             if (productDictionary[threeKey]) {
@@ -778,61 +810,7 @@ function splitToItems(text) {
             }
         }
 
-        // 2-словные комбинации
-        if (!used && i + 1 < words.length) {
-            const twoKey = (words[i] + ' ' + words[i+1]).toLowerCase();
-            if (productDictionary[twoKey]) {
-                result.push(words[i] + ' ' + words[i+1]);
-                i += 2;
-                used = true;
-            }
-        }
-
-        // одиночное слово
-        if (!used) {
-            result.push(words[i]);
-            i += 1;
-        }
-    }
-
-    return result;
-}
-;
-
-    // Если уже есть несколько частей — этого достаточно
-    if (parts.length > 1) {
-        return parts;
-    }
-
-    // Тут значит пользователь (или диктовка) дал одну длинную строку:
-    // "молоко хлеб картошка куриные крылышки"
-    const single = parts.length === 1 ? parts[0] : normalized.trim();
-    if (!single) return [];
-
-    const words = single
-        .split(/\s+/)
-        .map(w => w.trim())
-        .filter(Boolean);
-
-    if (words.length === 1) return [words[0]];
-
-    // Пытаемся склеивать 2-3 слова в один продукт, если такая фраза есть в словаре
-    const result = [];
-    let i = 0;
-
-    while (i < words.length) {
-        let used = false;
-
-        // 3-словные комбинации
-        if (i + 2 < words.length) {
-            const threeKey = (words[i] + ' ' + words[i+1] + ' ' + words[i+2]).toLowerCase();
-            if (productDictionary[threeKey]) {
-                result.push(words[i] + ' ' + words[i+1] + ' ' + words[i+2]);
-                i += 3;
-                used = true;
-            }
-        }
-
+        // 2 слова
         if (!used && i + 1 < words.length) {
             const twoKey = (words[i] + ' ' + words[i+1]).toLowerCase();
             if (productDictionary[twoKey]) {
@@ -850,7 +828,6 @@ function splitToItems(text) {
 
     return result;
 }
-
 
 function addItemsFromText(text) {
     if (!currentUser) return;
@@ -886,7 +863,6 @@ function addItemsFromText(text) {
     });
 }
 
-// === ДЛЯ ПОЛЯ ДИКТОВКИ (с таймером) ===
 function updateAddButtonState() {
     const input = $('item-input');
     const addBtn = $('add-btn');
@@ -1008,42 +984,38 @@ function setLang(lang) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    const manualInput = $('manual-input');
-    const addManualBtn = $('add-manual-btn');
-
-    const input = $('item-input');      // поле диктовки
+    const input = $('item-input');
     const addBtn = $('add-btn');
 
-    // --- Ручное поле: без таймера ---
-    function addManual() {
-        const text = manualInput.value.trim();
-        if (!text) return;
-        addItemsFromText(text);
-        manualInput.value = '';
-    }
-
-    manualInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addManual();
-        }
+    // переключение режимов ✍️ / 🎤
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentMode = btn.dataset.mode;
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.toggle('active', b === btn);
+            });
+            if (autoAddTimer) {
+                clearTimeout(autoAddTimer);
+                autoAddTimer = null;
+            }
+            updateHintAndPlaceholder();
+        });
     });
 
-    addManualBtn.addEventListener('click', addManual);
-
-    // --- Поле диктовки: с таймером и автодобавлением ---
+    // ввод в поле
     input.addEventListener('input', () => {
         updateAddButtonState();
         if (autoAddTimer) clearTimeout(autoAddTimer);
-        if (input.value.trim().length > 0) {
-            autoAddTimer = setTimeout(autoAddFromInput, 5000); // 5 секунд
+
+        if (currentMode === 'voice' && input.value.trim().length > 0) {
+            autoAddTimer = setTimeout(autoAddFromInput, 5000); // 5 секунд пауза
         }
     });
 
     input.addEventListener('keydown', e => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            autoAddFromInput();
+            autoAddFromInput(); // в обоих режимах Enter просто добавляет
         }
     });
 
@@ -1174,5 +1146,3 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
