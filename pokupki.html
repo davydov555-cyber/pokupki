@@ -753,11 +753,51 @@ function splitToItems(text) {
         .replace(/comma/gi, ',')
         .replace(/\sи\s/gi, ','); // "куриные крылышки и молоко и хлеб"
 
-    // Сначала пробуем классическое разделение по запятым / переводам строк
-    let parts = normalized
-        .split(/[,;\n]/)
-        .map(p => p.trim())
-        .filter(p => p.length > 0);
+    // 1) режем сразу по ПРОБЕЛАМ, запятым и переводам строки
+    const words = normalized
+        .split(/[\s,;\n]+/)      // ← тут и пробелы, и запятые, и ; и Enter
+        .map(w => w.trim())
+        .filter(Boolean);
+
+    if (words.length === 0) return [];
+
+    // 2) Склеиваем фразы из 2–3 слов, если они есть в словаре (куриные крылышки и т.п.)
+    const result = [];
+    let i = 0;
+
+    while (i < words.length) {
+        let used = false;
+
+        // 3-словные комбинации
+        if (i + 2 < words.length) {
+            const threeKey = (words[i] + ' ' + words[i+1] + ' ' + words[i+2]).toLowerCase();
+            if (productDictionary[threeKey]) {
+                result.push(words[i] + ' ' + words[i+1] + ' ' + words[i+2]);
+                i += 3;
+                used = true;
+            }
+        }
+
+        // 2-словные комбинации
+        if (!used && i + 1 < words.length) {
+            const twoKey = (words[i] + ' ' + words[i+1]).toLowerCase();
+            if (productDictionary[twoKey]) {
+                result.push(words[i] + ' ' + words[i+1]);
+                i += 2;
+                used = true;
+            }
+        }
+
+        // одиночное слово
+        if (!used) {
+            result.push(words[i]);
+            i += 1;
+        }
+    }
+
+    return result;
+}
+;
 
     // Если уже есть несколько частей — этого достаточно
     if (parts.length > 1) {
@@ -1134,4 +1174,5 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
