@@ -1,181 +1,1083 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Shopping App</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<title>Shopping App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f2f2f2;
-            color: #222;
-        }
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 
-        .app {
-            max-width: 480px;
-            margin: 0 auto;
-            padding-bottom: 40px;
-            background: #fff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+<style>
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+    color: #222;
+}
 
-        header {
-            padding: 16px;
-            background: #4285f4;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-        }
+.app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
 
-        .section-title {
-            margin: 16px;
-            font-size: 14px;
-            opacity: 0.7;
-        }
+header {
+    padding: 16px;
+    background: #4a90e2;
+    color: white;
+    text-align: center;
+}
 
-        textarea {
-            width: calc(100% - 32px);
-            margin: 0 16px;
-            height: 90px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #aaa;
-            resize: none;
-            font-size: 16px;
-        }
+header h1 {
+    margin: 0;
+    font-size: 20px;
+}
 
-        button {
-            width: calc(100% - 32px);
-            margin: 12px 16px;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #4285f4;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
+header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.9;
+}
 
-        button:active {
-            opacity: 0.7;
-        }
+.user-bar {
+    padding: 8px 16px 6px;
+    text-align: center;
+    background: #f8f9ff;
+    border-bottom: 1px solid #e2e4ff;
+}
 
-        .list {
-            margin: 16px;
-        }
+.user-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
 
-        .item {
-            padding: 12px;
-            background: #f7f7f7;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
-        }
+.family-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #eef3ff;
+    border: 1px dashed #4a90e2;
+    font-size: 11px;
+    color: #334;
+}
 
-        .done {
-            text-decoration: line-through;
-            opacity: 0.6;
-        }
+.family-pill-label {
+    opacity: 0.8;
+}
 
-        .delete-btn {
-            background: #d9534f;
-            padding: 6px 10px;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+.family-pill-code {
+    font-weight: 700;
+    letter-spacing: 1px;
+}
 
-        .delete-btn:active {
-            opacity: 0.7;
-        }
-    </style>
+.list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0 16px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid #eee;
+    gap: 10px;
+}
+
+li .name {
+    flex: 1;
+    font-size: 16px;
+}
+
+li .meta {
+    font-size: 11px;
+    color: #999;
+}
+
+li.bought .name {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #4a90e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checkbox.checked {
+    background: #4a90e2;
+    color: white;
+}
+
+.btn-delete {
+    background: transparent;
+    color: #ccc;
+    font-size: 18px;
+    padding: 4px 6px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    color: #999;
+}
+
+.footer-buttons {
+    padding: 8px 16px 4px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 8px;
+    background: #fafafa;
+    flex-wrap: wrap;
+}
+
+button {
+    border-radius: 8px;
+    border: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: #4a90e2;
+    color: white;
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-clear-bought {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-clear-all {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.input-block {
+    padding: 8px 16px 10px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #ffffff;
+}
+
+.row {
+    display: flex;
+    gap: 8px;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #4a90e2;
+}
+
+.hint {
+    font-size: 12px;
+    color: #666;
+    padding: 0 4px;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.modal {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 18px 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.modal h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+
+.modal p {
+    margin: 4px 0 10px;
+    font-size: 13px;
+    color: #555;
+}
+
+.field {
+    margin-bottom: 10px;
+}
+
+.field label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.field input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.flag-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 0;
+}
+
+.flag-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f7f7f7;
+    cursor: pointer;
+}
+
+.flag-btn.active {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74,144,226,0.2);
+    background: #eef3ff;
+}
+
+.lang-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.lang-btn {
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    background: #f7f7f7;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.lang-btn.active {
+    background: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+
+.family-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.family-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.small-note {
+    font-size: 11px;
+    color: #777;
+}
+
+.error-text {
+    font-size: 12px;
+    color: #b00020;
+    margin-bottom: 6px;
+}
+
+.modal-footer {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-footer button {
+    min-width: 120px;
+}
+
+#setup-step {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .modal {
+        margin: 0 8px;
+    }
+}
+</style>
 </head>
-
 <body>
 <div class="app">
-    <header>Shopping App</header>
+    <header>
+        <h1 id="title-text">Shopping App</h1>
+        <p id="subtitle-text">Shared family shopping list</p>
+    </header>
 
-    <div class="section-title">Ручной ввод</div>
-    <textarea id="manualInput" placeholder="Например: яблоки\nмолоко\nхлеб"></textarea>
+    <div class="user-bar">
+        <div id="user-info" class="user-name"></div>
+        <div id="family-code-line" style="display:none;">
+            <div class="family-pill">
+                <span id="family-code-label" class="family-pill-label"></span>
+                <span id="family-code-box" class="family-pill-code">------</span>
+            </div>
+        </div>
+    </div>
 
-    <button onclick="addManual()">Добавить в список</button>
+    <div class="list">
+        <ul id="items-list"></ul>
+    </div>
 
-    <div class="section-title">Список покупок</div>
-    <div id="itemList" class="list"></div>
+    <div class="footer-buttons">
+        <button id="clear-bought-btn" class="btn-clear-bought">Clear bought</button>
+        <button id="clear-all-btn" class="btn-clear-all">Clear all</button>
+    </div>
+
+    <div class="input-block">
+        <!-- Ручной ввод (без таймера) -->
+        <div class="row">
+            <input id="manual-input" type="text" placeholder="Milk bread eggs" />
+            <button id="add-manual-btn" class="btn-primary">+</button>
+        </div>
+        <div class="hint" id="hint-manual-text">
+            This field is for manual typing.
+        </div>
+
+        <!-- Поле для диктовки / голосового ввода (с таймером) -->
+        <div class="row">
+            <input id="item-input" type="text" placeholder="Dictate here" />
+            <button id="add-btn" class="btn-primary" disabled>+</button>
+        </div>
+        <div class="hint" id="hint-text">
+            Tap 🎤 on keyboard for voice input. Items will be added automatically after a pause.
+        </div>
+    </div>
 </div>
 
+<div id="onboarding" class="overlay">
+    <div class="modal">
+        <div id="lang-step">
+            <div class="flag-buttons">
+                <button type="button" class="flag-btn" data-lang="ru">🇷🇺</button>
+                <button type="button" class="flag-btn" data-lang="en">🇬🇧</button>
+                <button type="button" class="flag-btn" data-lang="fi">🇫🇮</button>
+            </div>
+        </div>
+
+        <div id="setup-step">
+            <h2 id="ob-title">Welcome!</h2>
+            <p id="ob-text">Set your name and family.</p>
+
+            <div id="ob-error" class="error-text" style="display:none;"></div>
+
+            <div class="field">
+                <label id="label-name" for="ob-name">Your name</label>
+                <input type="text" id="ob-name" />
+            </div>
+
+            <div class="field">
+                <label id="label-lang">Language</label>
+                <div class="lang-buttons">
+                    <button type="button" class="lang-btn" data-lang="ru">Русский</button>
+                    <button type="button" class="lang-btn" data-lang="en">English</button>
+                    <button type="button" class="lang-btn" data-lang="fi">Suomi</button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label id="label-family">Family</label>
+                <div class="family-options">
+                    <label>
+                        <input type="radio" name="family-mode" value="create" checked />
+                        <span id="label-create-family">Create my own family</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="family-mode" value="join" />
+                        <span id="label-join-family">Join family by code</span>
+                    </label>
+                    <input type="text" id="ob-family-code" placeholder="ABC123" style="margin-top:4px; display:none;" />
+                    <div class="small-note" id="label-family-note">
+                        If you join, ask family member for a code.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="ob-continue" class="btn-primary">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script>
-    // ======= LOCAL STORAGE =======
-    let items = JSON.parse(localStorage.getItem("items") || "[]");
-    render();
+const firebaseConfig = {
+    apiKey: "AIZaSDyI1R7z7El1w2uhvEdRPp1jq-e23HrblY",
+    authDomain: "shopping-app-907fc.firebaseapp.com",
+    projectId: "shopping-app-907fc",
+    storageBucket: "shopping-app-907fc.firebasestorage.app",
+    messagingSenderId: "101856550372",
+    appId: "1:101856550372:web:348c7fff7e07d1dd7247f1",
+    databaseURL: "https://shopping-app-907fc-default-rtdb.europe-west1.firebasedatabase.app"
+};
 
-    // ======= Добавить ручной ввод =======
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const USER_ID_KEY = 'shopping-app-user-id';
+
+let currentLang = 'ru';
+let currentUser = null;
+let currentFamilyCode = null;
+let itemsMap = {};
+let autoAddTimer = null;
+
+const $ = id => document.getElementById(id);
+
+const productDictionary = {
+    "молоко": { ru: "молоко", en: "milk", fi: "maito" },
+    "milk": { ru: "молоко", en: "milk", fi: "maito" },
+    "maito": { ru: "молоко", en: "milk", fi: "maito" },
+
+    "хлеб": { ru: "хлеб", en: "bread", fi: "leipä" },
+    "bread": { ru: "хлеб", en: "bread", fi: "leipä" },
+    "leipä": { ru: "хлеб", en: "bread", fi: "leipä" },
+
+    "яйца": { ru: "яйца", en: "eggs", fi: "munat" },
+    "egg": { ru: "яйца", en: "eggs", fi: "munat" },
+    "eggs": { ru: "яйца", en: "eggs", fi: "munat" },
+    "munat": { ru: "яйца", en: "eggs", fi: "munat" },
+
+    "картошка": { ru: "картошка", en: "potatoes", fi: "perunat" },
+    "картофель": { ru: "картофель", en: "potatoes", fi: "perunat" },
+    "potato": { ru: "картошка", en: "potato", fi: "peruna" },
+    "potatoes": { ru: "картошка", en: "potatoes", fi: "perunat" },
+    "peruna": { ru: "картошка", en: "potato", fi: "peruna" },
+    "perunat": { ru: "картошка", en: "potatoes", fi: "perunat" },
+
+    "куриные крылышки": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
+    "chicken wings": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
+    "kanansiivet": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
+
+    "курица": { ru: "курица", en: "chicken", fi: "kana" },
+    "chicken":{ ru: "курица", en: "chicken", fi: "kana" },
+    "kana": { ru: "курица", en: "chicken", fi: "kana" },
+
+    "сыр": { ru: "сыр", en: "cheese", fi: "juusto" },
+    "cheese": { ru: "сыр", en: "cheese", fi: "juusto" },
+    "juusto": { ru: "сыр", en: "cheese", fi: "juusto" },
+
+    "масло": { ru: "масло", en: "butter", fi: "voi" },
+    "butter": { ru: "масло", en: "butter", fi: "voi" },
+    "voi": { ru: "масло", en: "butter", fi: "voi" },
+
+    "помидоры":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
+    "tomato": { ru: "помидоры", en: "tomato", fi: "tomaatti" },
+    "tomatoes":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
+    "tomaatti":{ ru: "помидоры", en: "tomato", fi: "tomaatti" },
+    "tomaatit":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" }
+};
+
+const translations = {
+    ru: {
+        appTitle: 'Shopping App',
+        headerSubtitle: 'Общий список покупок для семьи.',
+        placeholderManual: 'Например: молоко хлеб картошка',
+        placeholderVoice: 'Продиктуй: молоко хлеб картошка',
+        hintManual: 'Это поле для ручного ввода. Само по таймеру ничего не добавляется.',
+        hintVoice: 'Это поле удобно для диктовки через 🎤 на клавиатуре. После небольшой паузы продукты добавятся автоматически.',
+        addButton: 'Добавить',
+        clearBought: 'Очистить купленные',
+        clearAll: 'Очистить всё',
+        listEmpty: 'Список пуст',
+        obTitle: 'Добро пожаловать!',
+        obText: 'Укажи своё имя и семью. У членов одной семьи будет общий список покупок.',
+        labelName: 'Как тебя зовут?',
+        labelLang: 'Язык интерфейса',
+        labelFamily: 'Семья',
+        labelCreateFamily: 'Создать свою семью',
+        labelJoinFamily: 'Присоединиться к семье по коду',
+        labelFamilyNote: 'Если присоединяешься, попроси члена семьи отправить тебе код.',
+        obContinue: 'Продолжить',
+        errorNameRequired: 'Пожалуйста, введи имя.',
+        errorFamilyCodeNotFound: 'Код семьи не найден.',
+        familyCodeLabel: 'Код семьи:',
+        userInfo: name => `${name}`,
+        addedBy: name => `добавил(а): ${name}`
+    },
+    en: {
+        appTitle: 'Shopping App',
+        headerSubtitle: 'Shared shopping list for your family.',
+        placeholderManual: 'Example: milk bread potatoes',
+        placeholderVoice: 'Dictate: milk bread potatoes',
+        hintManual: 'This field is for manual typing. Nothing is added automatically.',
+        hintVoice: 'Use this field with 🎤 on the keyboard. After a short pause, items will be added automatically.',
+        addButton: 'Add',
+        clearBought: 'Clear bought',
+        clearAll: 'Clear all',
+        listEmpty: 'List is empty',
+        obTitle: 'Welcome!',
+        obText: 'Set your name and family. Members of one family share a shopping list.',
+        labelName: 'Your name',
+        labelLang: 'Interface language',
+        labelFamily: 'Family',
+        labelCreateFamily: 'Create my own family',
+        labelJoinFamily: 'Join family by code',
+        labelFamilyNote: 'To join, ask your family member for a code.',
+        obContinue: 'Continue',
+        errorNameRequired: 'Please enter your name.',
+        errorFamilyCodeNotFound: 'Family code not found.',
+        familyCodeLabel: 'Family code:',
+        userInfo: name => `${name}`,
+        addedBy: name => `added by ${name}`
+    },
+    fi: {
+        appTitle: 'Shopping App',
+        headerSubtitle: 'Yhteinen ostoslista perheelle.',
+        placeholderManual: 'Esim: maito leipä perunat',
+        placeholderVoice: 'Sanele: maito leipä perunat',
+        hintManual: 'Tähän kirjoitat käsin. Mitään ei lisätä automaattisesti.',
+        hintVoice: 'Tätä kenttää voi käyttää puheelle 🎤-näppäimellä. Pienen tauon jälkeen tuotteet lisätään automaattisesti.',
+        addButton: 'Lisää',
+        clearBought: 'Poista ostetut',
+        clearAll: 'Tyhjennä lista',
+        listEmpty: 'Lista on tyhjä',
+        obTitle: 'Tervetuloa!',
+        obText: 'Anna nimesi ja perheesi. Samassa perheessä on yhteinen ostoslista.',
+        labelName: 'Mikä on nimesi?',
+        labelLang: 'Käyttöliittymän kieli',
+        labelFamily: 'Perhe',
+        labelCreateFamily: 'Luo oma perhe',
+        labelJoinFamily: 'Liity perheeseen koodilla',
+        labelFamilyNote: 'Jos liityt, pyydä perhekoodia toiselta perheenjäseneltä.',
+        obContinue: 'Jatka',
+        errorNameRequired: 'Kirjoita nimesi.',
+        errorFamilyCodeNotFound: 'Perhekoodia ei löytynyt.',
+        familyCodeLabel: 'Perhekoodi:',
+        userInfo: name => `${name}`,
+        addedBy: name => `lisäsi ${name}`
+    }
+};
+
+function randomId(prefix) {
+    return prefix + Math.random().toString(36).substring(2, 10);
+}
+
+function generateFamilyCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+function applyTranslations() {
+    const dict = translations[currentLang] || translations.en;
+    $('title-text').textContent = dict.appTitle;
+    $('subtitle-text').textContent = dict.headerSubtitle;
+
+    $('manual-input').placeholder = dict.placeholderManual;
+    $('item-input').placeholder = dict.placeholderVoice;
+
+    $('hint-manual-text').textContent = dict.hintManual;
+    $('hint-text').textContent = dict.hintVoice;
+
+    $('add-manual-btn').textContent = dict.addButton;
+    $('add-btn').textContent = dict.addButton;
+
+    $('clear-bought-btn').textContent = dict.clearBought;
+    $('clear-all-btn').textContent = dict.clearAll;
+
+    $('ob-title').textContent = dict.obTitle;
+    $('ob-text').textContent = dict.obText;
+    $('label-name').textContent = dict.labelName;
+    $('label-lang').textContent = dict.labelLang;
+    $('label-family').textContent = dict.labelFamily;
+    $('label-create-family').textContent = dict.labelCreateFamily;
+    $('label-join-family').textContent = dict.labelJoinFamily;
+    $('label-family-note').textContent = dict.labelFamilyNote;
+    $('ob-continue').textContent = dict.obContinue;
+    $('family-code-label').textContent = dict.familyCodeLabel;
+
+    if (currentUser) {
+        $('user-info').textContent = dict.userInfo(currentUser.name);
+    }
+}
+
+function getDisplayNameForItem(item) {
+    const base = (item.name || '').trim();
+    if (!base) return '';
+    const key = base.toLowerCase();
+    const entry = productDictionary[key];
+
+    if (!entry) {
+        return base;
+    }
+
+    const target = entry[currentLang] || base;
+    const ruText = entry.ru || base;
+
+    if (currentLang !== 'ru') {
+        if (target !== ruText) {
+            return `${target} (${ruText})`;
+        }
+        return target;
+    } else {
+        return ruText;
+    }
+}
+
+function renderList() {
+    const listEl = $('items-list');
+    listEl.innerHTML = '';
+
+    const dict = translations[currentLang] || translations.en;
+    const keys = Object.keys(itemsMap);
+
+    if (keys.length === 0) {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="name" style="color:#999;">${dict.listEmpty}</span>`;
+        listEl.appendChild(li);
+        return;
+    }
+
+    keys.sort((a, b) => {
+        const ta = itemsMap[a].createdAt || 0;
+        const tb = itemsMap[b].createdAt || 0;
+        return ta - tb;
+    });
+
+    keys.forEach(id => {
+        const item = itemsMap[id];
+        const li = document.createElement('li');
+        if (item.bought) li.classList.add('bought');
+
+        const checkbox = document.createElement('div');
+        checkbox.className = 'checkbox' + (item.bought ? ' checked' : '');
+        checkbox.innerHTML = item.bought ? '✓' : '';
+        checkbox.addEventListener('click', () => toggleItem(id, item));
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name';
+        nameSpan.textContent = getDisplayNameForItem(item);
+
+        const metaSpan = document.createElement('span');
+        metaSpan.className = 'meta';
+        if (item.addedByName) {
+            metaSpan.textContent = dict.addedBy(item.addedByName);
+        }
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn-delete';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', () => deleteItem(id));
+
+        const left = document.createElement('div');
+        left.style.flex = '1';
+        left.style.display = 'flex';
+        left.style.flexDirection = 'column';
+        left.appendChild(nameSpan);
+        if (item.addedByName) left.appendChild(metaSpan);
+
+        li.appendChild(checkbox);
+        li.appendChild(left);
+        li.appendChild(delBtn);
+        listEl.appendChild(li);
+    });
+}
+
+function splitToItems(text) {
+    if (!text) return [];
+    let normalized = text;
+
+    normalized = normalized
+        .replace(/новая строка/gi, '\n')
+        .replace(/следующая строка/gi, '\n')
+        .replace(/следующий пункт/gi, '\n')
+        .replace(/следующий/gi, '\n')
+        .replace(/enter/gi, '\n')
+        .replace(/запятая/gi, ',')
+        .replace(/comma/gi, ',')
+        .replace(/\sи\s/gi, ','); // "куриные крылышки и молоко и хлеб"
+
+    return normalized
+        .split(/[,;\n]/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+}
+
+function addItemsFromText(text) {
+    if (!currentUser) return;
+
+    const parts = splitToItems(text);
+    if (parts.length === 0) return;
+
+    const existingNames = new Set(
+        Object.values(itemsMap || {})
+            .filter(item => !item.bought)
+            .map(item => (item.name || '').toLowerCase().trim())
+    );
+
+    const now = Date.now();
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+
+    parts.forEach((rawName, i) => {
+        const name = rawName.trim();
+        if (!name) return;
+
+        const low = name.toLowerCase();
+        if (existingNames.has(low)) return;
+        existingNames.add(low);
+
+        const ref = listRef.push();
+        ref.set({
+            name,
+            bought: false,
+            addedById: currentUser.id,
+            addedByName: currentUser.name,
+            createdAt: now + i
+        });
+    });
+}
+
+// === ДЛЯ ПОЛЯ ДИКТОВКИ (с таймером) ===
+function updateAddButtonState() {
+    const input = $('item-input');
+    const addBtn = $('add-btn');
+    addBtn.disabled = input.value.trim().length === 0;
+}
+
+function autoAddFromInput() {
+    autoAddTimer = null;
+    const input = $('item-input');
+    const text = input.value.trim();
+    if (!text) return;
+    addItemsFromText(text);
+    input.value = '';
+    updateAddButtonState();
+}
+
+function toggleItem(id, item) {
+    if (!currentUser) return;
+    const ref = db.ref('lists/' + currentUser.familyId + '/items/' + id);
+    ref.update({ bought: !item.bought });
+}
+
+function deleteItem(id) {
+    if (!currentUser) return;
+    const ref = db.ref('lists/' + currentUser.familyId + '/items/' + id);
+    ref.remove();
+}
+
+function clearBought() {
+    if (!currentUser) return;
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+    Object.keys(itemsMap).forEach(id => {
+        if (itemsMap[id].bought) {
+            listRef.child(id).remove();
+        }
+    });
+}
+
+function clearAll() {
+    if (!currentUser) return;
+    if (!confirm('Delete all items?')) return;
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+    listRef.remove();
+}
+
+function subscribeToList() {
+    if (!currentUser) return;
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+    listRef.on('value', snap => {
+        itemsMap = snap.val() || {};
+        renderList();
+    });
+}
+
+function loadOrCreateFamilyCode() {
+    if (!currentUser) return;
+    const famRef = db.ref('families/' + currentUser.familyId);
+    famRef.once('value').then(snap => {
+        const val = snap.val();
+        if (val && val.code) {
+            currentFamilyCode = val.code;
+            showFamilyCode();
+        } else {
+            const code = generateFamilyCode();
+            currentFamilyCode = code;
+            const updates = {};
+            updates['families/' + currentUser.familyId] = {
+                code,
+                ownerId: currentUser.id,
+                createdAt: Date.now()
+            };
+            updates['familyCodes/' + code] = currentUser.familyId;
+            db.ref().update(updates).then(showFamilyCode);
+        }
+    });
+}
+
+function showFamilyCode() {
+    if (!currentFamilyCode) return;
+    $('family-code-line').style.display = 'block';
+    $('family-code-box').textContent = currentFamilyCode;
+}
+
+function initUserFromDb(userId) {
+    db.ref('users/' + userId).once('value').then(snap => {
+        if (!snap.exists()) {
+            showOnboarding();
+            return;
+        }
+        const data = snap.val();
+        currentUser = {
+            id: userId,
+            name: data.name || 'User',
+            language: data.language || 'ru',
+            familyId: data.familyId
+        };
+        currentLang = currentUser.language;
+        applyTranslations();
+        $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
+        $('onboarding').classList.add('hidden');
+        subscribeToList();
+        loadOrCreateFamilyCode();
+    });
+}
+
+function showOnboarding() {
+    $('onboarding').classList.remove('hidden');
+    $('lang-step').style.display = 'block';
+    $('setup-step').style.display = 'none';
+    $('ob-error').style.display = 'none';
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    applyTranslations();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const manualInput = $('manual-input');
+    const addManualBtn = $('add-manual-btn');
+
+    const input = $('item-input');      // поле диктовки
+    const addBtn = $('add-btn');
+
+    // --- Ручное поле: без таймера ---
     function addManual() {
-        let text = document.getElementById("manualInput").value.trim();
-        if (text === "") return;
+        const text = manualInput.value.trim();
+        if (!text) return;
+        addItemsFromText(text);
+        manualInput.value = '';
+    }
 
-        let lines = text.split("\n").map(x => x.trim()).filter(x => x !== "");
+    manualInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addManual();
+        }
+    });
 
-        lines.forEach(line => {
-            items.unshift({
-                text: line,
-                done: false
+    addManualBtn.addEventListener('click', addManual);
+
+    // --- Поле диктовки: с таймером и автодобавлением ---
+    input.addEventListener('input', () => {
+        updateAddButtonState();
+        if (autoAddTimer) clearTimeout(autoAddTimer);
+        if (input.value.trim().length > 0) {
+            autoAddTimer = setTimeout(autoAddFromInput, 5000); // 5 секунд
+        }
+    });
+
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            autoAddFromInput();
+        }
+    });
+
+    addBtn.addEventListener('click', () => {
+        autoAddFromInput();
+    });
+
+    $('clear-bought-btn').addEventListener('click', clearBought);
+    $('clear-all-btn').addEventListener('click', clearAll);
+
+    document.querySelectorAll('.flag-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.flag-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const lang = btn.dataset.lang;
+            currentLang = lang;
+            setLang(lang);
+            $('lang-step').style.display = 'none';
+            $('setup-step').style.display = 'block';
+        });
+    });
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setLang(btn.dataset.lang);
+        });
+    });
+
+    const codeInput = $('ob-family-code');
+    document.querySelectorAll('input[name="family-mode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value === 'join' && radio.checked) {
+                codeInput.style.display = 'block';
+            } else if (radio.value === 'create' && radio.checked) {
+                codeInput.style.display = 'none';
+            }
+        });
+    });
+
+    $('ob-continue').addEventListener('click', () => {
+        const dict = translations[currentLang] || translations.en;
+        const name = $('ob-name').value.trim();
+        if (!name) {
+            $('ob-error').textContent = dict.errorNameRequired;
+            $('ob-error').style.display = 'block';
+            return;
+        }
+        const mode = document.querySelector('input[name="family-mode"]:checked').value;
+        const isJoin = mode === 'join';
+        let code = $('ob-family-code').value.trim().toUpperCase();
+
+        let userId = localStorage.getItem(USER_ID_KEY);
+        if (!userId) {
+            userId = randomId('u_');
+            localStorage.setItem(USER_ID_KEY, userId);
+        }
+
+        if (isJoin && !code) {
+            $('ob-error').textContent = dict.errorFamilyCodeNotFound;
+            $('ob-error').style.display = 'block';
+            return;
+        }
+
+        if (isJoin) {
+            db.ref('familyCodes/' + code).once('value').then(snap => {
+                if (!snap.exists()) {
+                    $('ob-error').textContent = dict.errorFamilyCodeNotFound;
+                    $('ob-error').style.display = 'block';
+                    return;
+                }
+                const familyId = snap.val();
+                const userData = {
+                    name,
+                    language: currentLang,
+                    familyId,
+                    createdAt: Date.now()
+                };
+                db.ref('users/' + userId).set(userData).then(() => {
+                    currentUser = { id: userId, ...userData };
+                    applyTranslations();
+                    $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
+                    $('onboarding').classList.add('hidden');
+                    subscribeToList();
+                    db.ref('families/' + familyId + '/code').once('value').then(c => {
+                        currentFamilyCode = c.val() || code;
+                        showFamilyCode();
+                    });
+                });
             });
-        });
+        } else {
+            const familyId = randomId('f_');
+            const familyCode = generateFamilyCode();
+            const userData = {
+                name,
+                language: currentLang,
+                familyId,
+                createdAt: Date.now()
+            };
 
-        document.getElementById("manualInput").value = "";
-        save();
-        render();
+            const updates = {};
+            updates['users/' + userId] = userData;
+            updates['families/' + familyId] = {
+                code: familyCode,
+                ownerId: userId,
+                createdAt: Date.now()
+            };
+            updates['familyCodes/' + familyCode] = familyId;
+
+            db.ref().update(updates).then(() => {
+                currentUser = { id: userId, ...userData };
+                currentFamilyCode = familyCode;
+                applyTranslations();
+                $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
+                $('onboarding').classList.add('hidden');
+                subscribeToList();
+                showFamilyCode();
+            });
+        }
+    });
+
+    const storedUserId = localStorage.getItem(USER_ID_KEY);
+    if (storedUserId) {
+        initUserFromDb(storedUserId);
+    } else {
+        showOnboarding();
     }
-
-    // ======= Переключить статус =======
-    function toggle(index) {
-        items[index].done = !items[index].done;
-        save();
-        render();
-    }
-
-    // ======= Удалить =======
-    function removeItem(index) {
-        items.splice(index, 1);
-        save();
-        render();
-    }
-
-    // ======= Сохранение =======
-    function save() {
-        localStorage.setItem("items", JSON.stringify(items));
-    }
-
-    // ======= Отобразить список =======
-    function render() {
-        let list = document.getElementById("itemList");
-        list.innerHTML = "";
-
-        items.forEach((item, index) => {
-            let div = document.createElement("div");
-            div.className = "item";
-
-            div.innerHTML = `
-                <span onclick="toggle(${index})" class="${item.done ? 'done' : ''}">
-                    ${item.text}
-                </span>
-                <span class="delete-btn" onclick="removeItem(${index})">X</span>
-            `;
-
-            list.appendChild(div);
-        });
-    }
+});
 </script>
-
 </body>
 </html>
