@@ -738,11 +738,11 @@ function renderList() {
         listEl.appendChild(li);
     });
 }
-
 function splitToItems(text) {
     if (!text) return [];
     let normalized = text;
 
+    // Голосовые команды: "новая строка", "запятая" и т.п.
     normalized = normalized
         .replace(/новая строка/gi, '\n')
         .replace(/следующая строка/gi, '\n')
@@ -753,11 +753,64 @@ function splitToItems(text) {
         .replace(/comma/gi, ',')
         .replace(/\sи\s/gi, ','); // "куриные крылышки и молоко и хлеб"
 
-    return normalized
+    // Сначала пробуем классическое разделение по запятым / переводам строк
+    let parts = normalized
         .split(/[,;\n]/)
         .map(p => p.trim())
         .filter(p => p.length > 0);
+
+    // Если уже есть несколько частей — этого достаточно
+    if (parts.length > 1) {
+        return parts;
+    }
+
+    // Тут значит пользователь (или диктовка) дал одну длинную строку:
+    // "молоко хлеб картошка куриные крылышки"
+    const single = parts.length === 1 ? parts[0] : normalized.trim();
+    if (!single) return [];
+
+    const words = single
+        .split(/\s+/)
+        .map(w => w.trim())
+        .filter(Boolean);
+
+    if (words.length === 1) return [words[0]];
+
+    // Пытаемся склеивать 2-3 слова в один продукт, если такая фраза есть в словаре
+    const result = [];
+    let i = 0;
+
+    while (i < words.length) {
+        let used = false;
+
+        // 3-словные комбинации
+        if (i + 2 < words.length) {
+            const threeKey = (words[i] + ' ' + words[i+1] + ' ' + words[i+2]).toLowerCase();
+            if (productDictionary[threeKey]) {
+                result.push(words[i] + ' ' + words[i+1] + ' ' + words[i+2]);
+                i += 3;
+                used = true;
+            }
+        }
+
+        if (!used && i + 1 < words.length) {
+            const twoKey = (words[i] + ' ' + words[i+1]).toLowerCase();
+            if (productDictionary[twoKey]) {
+                result.push(words[i] + ' ' + words[i+1]);
+                i += 2;
+                used = true;
+            }
+        }
+
+        if (!used) {
+            result.push(words[i]);
+            i += 1;
+        }
+    }
+
+    return result;
 }
+
 
 function addItemsFromText(text) {
     if (!currentUser) return;
@@ -1081,3 +1134,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
