@@ -503,36 +503,178 @@ const $ = id => document.getElementById(id);
 
 // === словарь продуктов, добавлены новые фразы ===
 const productDictionary = {
+    // МОЛОКО
     "молоко": { ru: "молоко", en: "milk", fi: "maito" },
     "milk": { ru: "молоко", en: "milk", fi: "maito" },
     "maito": { ru: "молоко", en: "milk", fi: "maito" },
 
+    // ХЛЕБ
     "хлеб": { ru: "хлеб", en: "bread", fi: "leipä" },
     "bread": { ru: "хлеб", en: "bread", fi: "leipä" },
     "leipä": { ru: "хлеб", en: "bread", fi: "leipä" },
 
+    // ЧЁРНЫЙ ХЛЕБ
     "черный хлеб": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
     "чёрный хлеб": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
     "black bread": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
     "dark bread": { ru: "чёрный хлеб", en: "dark bread", fi: "ruisleipä" },
     "ruisleipä": { ru: "чёрный хлеб", en: "black bread", fi: "ruisleipä" },
 
+    // БЕЛЫЙ ХЛЕБ
     "белый хлеб": { ru: "белый хлеб", en: "white bread", fi: "vaalea leipä" },
     "white bread": { ru: "белый хлеб", en: "white bread", fi: "vaalea leipä" },
     "vaalea leipä": { ru: "белый хлеб", en: "white bread", fi: "vaalea leipä" },
 
+    // ЯЙЦА
     "яйца": { ru: "яйца", en: "eggs", fi: "munat" },
+    "яйцо": { ru: "яйца", en: "eggs", fi: "munat" },
     "egg": { ru: "яйца", en: "eggs", fi: "munat" },
     "eggs": { ru: "яйца", en: "eggs", fi: "munat" },
     "munat": { ru: "яйца", en: "eggs", fi: "munat" },
 
+    // КАРТОШКА
     "картошка": { ru: "картошка", en: "potatoes", fi: "perunat" },
-    "картофель": { ru: "картофель", en: "potatoes", fi: "perunat" },
+    "картофель": { ru: "картошка", en: "potatoes", fi: "perunat" },
     "potato": { ru: "картошка", en: "potato", fi: "peruna" },
     "potatoes": { ru: "картошка", en: "potatoes", fi: "perunat" },
     "peruna": { ru: "картошка", en: "potato", fi: "peruna" },
     "perunat": { ru: "картошка", en: "potatoes", fi: "perunat" },
 
+    // ОГУРЦЫ
+    "огурец": { ru: "огурец", en: "cucumber", fi: "kurkku" },
+    "огурцы": { ru: "огурцы", en: "cucumbers", fi: "kurkut" },
+    "cucumber": { ru: "огурец", en: "cucumber", fi: "kurkku" },
+    "cucumbers": { ru: "огурцы", en: "cucumbers", fi: "kurkut" },
+    "kurkku": { ru: "огурец", en: "cucumber", fi: "kurkku" },
+    "kurkut": { ru: "огурцы", en: "cucumbers", fi: "kurkut" },
+
+    // ЛУК
+    "лук": { ru: "лук", en: "onion", fi: "sipuli" },
+    "репчатый лук": { ru: "лук", en: "onion", fi: "sipuli" },
+    "onion": { ru: "лук", en: "onion", fi: "sipuli" },
+    "onions": { ru: "лук", en: "onions", fi: "sipulit" },
+    "sipuli": { ru: "лук", en: "onion", fi: "sipuli" },
+    "sipulit": { ru: "лук", en: "onions", fi: "sipulit" },
+
+    // МОРКОВЬ
+    "морковь": { ru: "морковь", en: "carrot", fi: "porkkana" },
+    "морковка": { ru: "морковь", en: "carrot", fi: "porkkana" },
+    "carrot": { ru: "морковь", en: "carrot", fi: "porkkana" },
+    "carrots": { ru: "морковь", en: "carrots", fi: "porkkanat" },
+    "porkkana": { ru: "морковь", en: "carrot", fi: "porkkana" },
+    "porkkanat": { ru: "морковь", en: "carrots", fi: "porkkanat" },
+
+    // СВЁКЛА
+    "свекла": { ru: "свёкла", en: "beetroot", fi: "punajuuri" },
+    "свёкла": { ru: "свёкла", en: "beetroot", fi: "punajuuri" },
+    "beetroot": { ru: "свёкла", en: "beetroot", fi: "punajuuri" },
+    "punajuuri": { ru: "свёкла", en: "beetroot", fi: "punajuuri" },
+
+    // КАПУСТА
+    "капуста": { ru: "капуста", en: "cabbage", fi: "kaali" },
+    "cabbage": { ru: "капуста", en: "cabbage", fi: "kaali" },
+    "kaali": { ru: "капуста", en: "cabbage", fi: "kaali" },
+
+    // ПОМИДОРЫ (были, оставляем)
+    "помидоры":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
+    "помидор":{ ru: "помидоры", en: "tomato", fi: "tomaatti" },
+    "tomato": { ru: "помидоры", en: "tomato", fi: "tomaatti" },
+    "tomatoes":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
+    "tomaatti":{ ru: "помидоры", en: "tomato", fi: "tomaatti" },
+    "tomaatit":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
+
+    // ЯБЛОКИ
+    "яблоко": { ru: "яблоко", en: "apple", fi: "omena" },
+    "яблоки": { ru: "яблоки", en: "apples", fi: "omenat" },
+    "apple": { ru: "яблоко", en: "apple", fi: "omena" },
+    "apples": { ru: "яблоки", en: "apples", fi: "omenat" },
+    "omena": { ru: "яблоко", en: "apple", fi: "omena" },
+    "omenat": { ru: "яблоки", en: "apples", fi: "omenat" },
+
+    // БАНАНЫ
+    "банан": { ru: "банан", en: "banana", fi: "banaani" },
+    "бананы": { ru: "бананы", en: "bananas", fi: "banaanit" },
+    "banana": { ru: "банан", en: "banana", fi: "banaani" },
+    "bananas": { ru: "бананы", en: "bananas", fi: "banaanit" },
+    "banaani": { ru: "банан", en: "banana", fi: "banaani" },
+    "banaanit": { ru: "бананы", en: "bananas", fi: "banaanit" },
+
+    // АПЕЛЬСИНЫ
+    "апельсин": { ru: "апельсин", en: "orange", fi: "appelsiini" },
+    "апельсины": { ru: "апельсины", en: "oranges", fi: "appelsiinit" },
+    "orange": { ru: "апельсин", en: "orange", fi: "appelsiini" },
+    "oranges": { ru: "апельсины", en: "oranges", fi: "appelsiinit" },
+    "appelsiini": { ru: "апельсин", en: "orange", fi: "appelsiini" },
+    "appelsiinit": { ru: "апельсины", en: "oranges", fi: "appelsiinit" },
+
+    // ЛИМОН
+    "лимон": { ru: "лимон", en: "lemon", fi: "sitruuna" },
+    "лимоны": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
+    "lemon": { ru: "лимон", en: "lemon", fi: "sitruuna" },
+    "lemons": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
+    "sitruuna": { ru: "лимон", en: "lemon", fi: "sitruuna" },
+    "sitruunat": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
+
+    // СЫР (уже был)
+    "сыр": { ru: "сыр", en: "cheese", fi: "juusto" },
+    "cheese": { ru: "сыр", en: "cheese", fi: "juusto" },
+    "juusto": { ru: "сыр", en: "cheese", fi: "juusto" },
+
+    // МАСЛО СЛИВОЧНОЕ (было)
+    "масло": { ru: "масло", en: "butter", fi: "voi" },
+    "сливочное масло": { ru: "масло", en: "butter", fi: "voi" },
+    "butter": { ru: "масло", en: "butter", fi: "voi" },
+    "voi": { ru: "масло", en: "butter", fi: "voi" },
+
+    // МАСЛО РАСТИТЕЛЬНОЕ
+    "растительное масло": { ru: "растительное масло", en: "vegetable oil", fi: "kasviöljy" },
+    "подсолнечное масло": { ru: "подсолнечное масло", en: "sunflower oil", fi: "auringonkukkaöljy" },
+    "sunflower oil": { ru: "подсолнечное масло", en: "sunflower oil", fi: "auringonkukkaöljy" },
+    "vegetable oil": { ru: "растительное масло", en: "vegetable oil", fi: "kasviöljy" },
+    "olive oil": { ru: "оливковое масло", en: "olive oil", fi: "oliiviöljy" },
+    "оливковое масло": { ru: "оливковое масло", en: "olive oil", fi: "oliiviöljy" },
+
+    // СМЕТАНА
+    "сметана": { ru: "сметана", en: "sour cream", fi: "smetana" },
+    "sour cream": { ru: "сметана", en: "sour cream", fi: "smetana" },
+    "smetana": { ru: "сметана", en: "sour cream", fi: "smetana" },
+
+    // ЙОГУРТ / КЕФИР / ТВОРОГ
+    "йогурт": { ru: "йогурт", en: "yogurt", fi: "jogurtti" },
+    "yogurt": { ru: "йогурт", en: "yogurt", fi: "jogurtti" },
+    "jogurtti": { ru: "йогурт", en: "yogurt", fi: "jogurtti" },
+
+    "кефир": { ru: "кефир", en: "kefir", fi: "kefir" },
+    "kefir": { ru: "кефир", en: "kefir", fi: "kefir" },
+
+    "творог": { ru: "творог", en: "cottage cheese", fi: "raejuusto" },
+    "cottage cheese": { ru: "творог", en: "cottage cheese", fi: "raejuusto" },
+    "raejuusto": { ru: "творог", en: "cottage cheese", fi: "raejuusto" },
+
+    // КОЛБАСА / СОСИСКИ
+    "колбаса": { ru: "колбаса", en: "sausage", fi: "makkara" },
+    "sausage": { ru: "колбаса", en: "sausage", fi: "makkara" },
+    "makkara": { ru: "колбаса", en: "sausage", fi: "makkara" },
+
+    "сосиски": { ru: "сосиски", en: "sausages", fi: "nakit" },
+    "сосиска": { ru: "сосиски", en: "sausage", fi: "nakki" },
+    "sausages": { ru: "сосиски", en: "sausages", fi: "nakit" },
+    "nakit": { ru: "сосиски", en: "sausages", fi: "nakit" },
+
+    // ФАРШ / МЯСО
+    "фарш": { ru: "фарш", en: "minced meat", fi: "jauheliha" },
+    "minced meat": { ru: "фарш", en: "minced meat", fi: "jauheliha" },
+    "jauheliha": { ru: "фарш", en: "minced meat", fi: "jauheliha" },
+
+    "говядина": { ru: "говядина", en: "beef", fi: "naudanliha" },
+    "beef": { ru: "говядина", en: "beef", fi: "naudanliha" },
+    "naudanliha": { ru: "говядина", en: "beef", fi: "naudanliha" },
+
+    "свинина": { ru: "свинина", en: "pork", fi: "sianliha" },
+    "pork": { ru: "свинина", en: "pork", fi: "sianliha" },
+    "sianliha": { ru: "свинина", en: "pork", fi: "sianliha" },
+
+    // КУРИЦА / КРЫЛЫШКИ / ФИЛЕ (были)
     "куриные крылышки": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
     "chicken wings": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
     "kanansiivet": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
@@ -549,20 +691,50 @@ const productDictionary = {
     "fish fillet": { ru: "филе рыбы", en: "fish fillet", fi: "kalafilee" },
     "kalafilee": { ru: "филе рыбы", en: "fish fillet", fi: "kalafilee" },
 
-    "сыр": { ru: "сыр", en: "cheese", fi: "juusto" },
-    "cheese": { ru: "сыр", en: "cheese", fi: "juusto" },
-    "juusto": { ru: "сыр", en: "cheese", fi: "juusto" },
+    // КРУПЫ И МАКАРОНЫ
+    "рис": { ru: "рис", en: "rice", fi: "riisi" },
+    "rice": { ru: "рис", en: "rice", fi: "riisi" },
+    "riisi": { ru: "рис", en: "rice", fi: "riisi" },
 
-    "масло": { ru: "масло", en: "butter", fi: "voi" },
-    "butter": { ru: "масло", en: "butter", fi: "voi" },
-    "voi": { ru: "масло", en: "butter", fi: "voi" },
+    "гречка": { ru: "гречка", en: "buckwheat", fi: "tattari" },
+    "buckwheat": { ru: "гречка", en: "buckwheat", fi: "tattari" },
+    "tattari": { ru: "гречка", en: "buckwheat", fi: "tattari" },
 
-    "помидоры":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
-    "tomato": { ru: "помидоры", en: "tomato", fi: "tomaatti" },
-    "tomatoes":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
-    "tomaatti":{ ru: "помидоры", en: "tomato", fi: "tomaatti" },
-    "tomaatit":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" }
+    "макароны": { ru: "макароны", en: "pasta", fi: "pasta" },
+    "паста": { ru: "макароны", en: "pasta", fi: "pasta" },
+    "pasta": { ru: "макароны", en: "pasta", fi: "pasta" },
+
+    "спагетти": { ru: "спагетти", en: "spaghetti", fi: "spagetti" },
+    "spaghetti": { ru: "спагетти", en: "spaghetti", fi: "spagetti" },
+    "spagetti": { ru: "спагетти", en: "spaghetti", fi: "spagetti" },
+
+    // САХАР / СОЛЬ / МУКА
+    "сахар": { ru: "сахар", en: "sugar", fi: "sokeri" },
+    "sugar": { ru: "сахар", en: "sugar", fi: "sokeri" },
+    "sokeri": { ru: "сахар", en: "sugar", fi: "sokeri" },
+
+    "соль": { ru: "соль", en: "salt", fi: "suola" },
+    "salt": { ru: "соль", en: "salt", fi: "suola" },
+    "suola": { ru: "соль", en: "salt", fi: "suola" },
+
+    "мука": { ru: "мука", en: "flour", fi: "jauho" },
+    "flour": { ru: "мука", en: "flour", fi: "jauho" },
+    "jauho": { ru: "мука", en: "flour", fi: "jauho" },
+
+    // ВОДА / СОК
+    "вода": { ru: "вода", en: "water", fi: "vesi" },
+    "water": { ru: "вода", en: "water", fi: "vesi" },
+    "vesi": { ru: "вода", en: "water", fi: "vesi" },
+
+    "минеральная вода": { ru: "минеральная вода", en: "mineral water", fi: "kivennäisvesi" },
+    "mineral water": { ru: "минеральная вода", en: "mineral water", fi: "kivennäisvesi" },
+    "kivennäisvesi": { ru: "минеральная вода", en: "mineral water", fi: "kivennäisvesi" },
+
+    "сок": { ru: "сок", en: "juice", fi: "mehu" },
+    "juice": { ru: "сок", en: "juice", fi: "mehu" },
+    "mehu": { ru: "сок", en: "juice", fi: "mehu" }
 };
+
 
 const translations = {
     ru: {
@@ -1146,3 +1318,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
