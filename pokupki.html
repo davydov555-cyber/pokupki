@@ -400,6 +400,7 @@ input[type="text"]:focus {
     <div class="footer-buttons">
         <button id="clear-bought-btn" class="btn-clear-bought">Clear bought</button>
         <button id="clear-all-btn" class="btn-clear-all">Clear all</button>
+        <button id="share-btn" class="btn-primary">Поделиться приложением</button>
     </div>
 
     <!-- один компактный блок: режим ✍️ / 🎤 + одно поле ввода -->
@@ -501,7 +502,7 @@ let currentMode = 'manual'; // 'manual' или 'voice'
 
 const $ = id => document.getElementById(id);
 
-// === словарь продуктов, добавлены новые фразы ===
+// === словарь продуктов, расширенный ===
 const productDictionary = {
     // МОЛОКО
     "молоко": { ru: "молоко", en: "milk", fi: "maito" },
@@ -575,7 +576,7 @@ const productDictionary = {
     "cabbage": { ru: "капуста", en: "cabbage", fi: "kaali" },
     "kaali": { ru: "капуста", en: "cabbage", fi: "kaali" },
 
-    // ПОМИДОРЫ (были, оставляем)
+    // ПОМИДОРЫ
     "помидоры":{ ru: "помидоры", en: "tomatoes", fi: "tomaatit" },
     "помидор":{ ru: "помидоры", en: "tomato", fi: "tomaatti" },
     "tomato": { ru: "помидоры", en: "tomato", fi: "tomaatti" },
@@ -615,12 +616,12 @@ const productDictionary = {
     "sitruuna": { ru: "лимон", en: "lemon", fi: "sitruuna" },
     "sitruunat": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
 
-    // СЫР (уже был)
+    // СЫР
     "сыр": { ru: "сыр", en: "cheese", fi: "juusto" },
     "cheese": { ru: "сыр", en: "cheese", fi: "juusto" },
     "juusto": { ru: "сыр", en: "cheese", fi: "juusto" },
 
-    // МАСЛО СЛИВОЧНОЕ (было)
+    // МАСЛО СЛИВОЧНОЕ
     "масло": { ru: "масло", en: "butter", fi: "voi" },
     "сливочное масло": { ru: "масло", en: "butter", fi: "voi" },
     "butter": { ru: "масло", en: "butter", fi: "voi" },
@@ -674,7 +675,7 @@ const productDictionary = {
     "pork": { ru: "свинина", en: "pork", fi: "sianliha" },
     "sianliha": { ru: "свинина", en: "pork", fi: "sianliha" },
 
-    // КУРИЦА / КРЫЛЫШКИ / ФИЛЕ (были)
+    // КУРИЦА / КРЫЛЫШКИ / ФИЛЕ
     "куриные крылышки": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
     "chicken wings": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
     "kanansiivet": { ru: "куриные крылышки", en: "chicken wings", fi: "kanansiivet" },
@@ -734,7 +735,6 @@ const productDictionary = {
     "juice": { ru: "сок", en: "juice", fi: "mehu" },
     "mehu": { ru: "сок", en: "juice", fi: "mehu" }
 };
-
 
 const translations = {
     ru: {
@@ -1198,6 +1198,35 @@ window.addEventListener('DOMContentLoaded', () => {
     $('clear-bought-btn').addEventListener('click', clearBought);
     $('clear-all-btn').addEventListener('click', clearAll);
 
+    // Кнопка "Поделиться приложением"
+    const shareBtn = document.getElementById('share-btn');
+    if (shareBtn) {
+        if (navigator.share) {
+            // Современные мобильные браузеры
+            shareBtn.addEventListener('click', () => {
+                navigator.share({
+                    title: 'Shopping App',
+                    text: 'Общий список покупок для семьи',
+                    url: window.location.href
+                }).catch(() => {
+                    // пользователь мог закрыть диалог — это нормально
+                });
+            });
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            // Если Web Share нет, но можно скопировать ссылку в буфер
+            shareBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(window.location.href)
+                    .then(() => alert('Ссылка на приложение скопирована'))
+                    .catch(() => alert('Не удалось скопировать ссылку'));
+            });
+        } else {
+            // Совсем старые браузеры — просто показываем ссылку
+            shareBtn.addEventListener('click', () => {
+                prompt('Скопируй ссылку на приложение:', window.location.href);
+            });
+        }
+    }
+
     document.querySelectorAll('.flag-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.flag-btn').forEach(b => b.classList.remove('active'));
@@ -1318,4 +1347,3 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
