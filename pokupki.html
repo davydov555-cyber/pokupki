@@ -144,6 +144,29 @@ li.bought .name {
     color: #999;
 }
 
+/* кнопка камеры у товара */
+.btn-photo {
+    background: transparent;
+    font-size: 18px;
+    padding: 4px 6px;
+    cursor: pointer;
+    color: #4a90e2;
+    flex-shrink: 0;
+}
+
+.btn-photo:hover {
+    opacity: 0.8;
+}
+
+/* мини-превью фото товара */
+.item-photo-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
 .footer-buttons {
     padding: 8px 16px 4px;
     border-top: 1px solid #eee;
@@ -232,6 +255,30 @@ input[type="text"]:focus {
     font-size: 11px;
     color: #666;
     padding: 2px 4px 0;
+}
+
+/* быстрые кнопки популярных продуктов */
+.quick-products {
+    margin-top: 6px;
+    display: none;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-top: 4px;
+}
+
+.quick-products::-webkit-scrollbar {
+    display: none;
+}
+
+.quick-btn {
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .overlay {
@@ -416,6 +463,8 @@ input[type="text"]:focus {
         <div class="hint" id="hint-text">
             <!-- текст подставляем из переводов -->
         </div>
+        <!-- быстрые кнопки популярных продуктов -->
+        <div class="quick-products" id="quick-products"></div>
     </div>
 </div>
 
@@ -474,8 +523,12 @@ input[type="text"]:focus {
     </div>
 </div>
 
+<!-- скрытый инпут для выбора фото товара -->
+<input type="file" id="photo-input" accept="image/*" style="display:none" />
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -490,6 +543,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
 const USER_ID_KEY = 'shopping-app-user-id';
 
@@ -499,6 +553,8 @@ let currentFamilyCode = null;
 let itemsMap = {};
 let autoAddTimer = null;
 let currentMode = 'manual'; // 'manual' или 'voice'
+let photoTargetItemId = null;
+let popularProducts = [];
 
 const $ = id => document.getElementById(id);
 
@@ -884,6 +940,17 @@ function getDisplayNameForItem(item) {
     }
 }
 
+// канонический ключ для статистики (по-русски, если знаем)
+function getCanonicalKeyForName(rawName) {
+    const base = (rawName || '').trim().toLowerCase();
+    if (!base) return '';
+    const entry = productDictionary[base];
+    if (entry && entry.ru) {
+        return entry.ru.toLowerCase();
+    }
+    return base;
+}
+
 function renderList() {
     const listEl = $('items-list');
     listEl.innerHTML = '';
@@ -936,10 +1003,54 @@ function renderList() {
         left.appendChild(nameSpan);
         if (item.addedByName) left.appendChild(metaSpan);
 
+        let thumb = null;
+        if (item.photoUrl) {
+            thumb = document.createElement('img');
+            thumb.className = 'item-photo-thumb';
+            thumb.src = item.photoUrl;
+            thumb.alt = item.name || '';
+        }
+
+        const photoBtn = document.createElement('button');
+        photoBtn.className = 'btn-photo';
+        photoBtn.textContent = '📷';
+        photoBtn.title = 'Добавить / изменить фото';
+        photoBtn.addEventListener('click', () => {
+            startPhotoSelectForItem(id);
+        });
+
         li.appendChild(checkbox);
+        if (thumb) li.appendChild(thumb);
         li.appendChild(left);
+        li.appendChild(photoBtn);
         li.appendChild(delBtn);
         listEl.appendChild(li);
+    });
+}
+
+// рендер быстрых кнопок популярных продуктов
+function renderPopularButtons() {
+    const container = $('quick-products');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!popularProducts || popularProducts.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+
+    popularProducts.forEach(stat => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-btn';
+        const fakeItem = { name: stat.name };
+        btn.textContent = getDisplayNameForItem(fakeItem);
+        btn.addEventListener('click', () => {
+            // добавляем один этот продукт сразу
+            addItemsFromText(stat.name);
+        });
+        container.appendChild(btn);
     });
 }
 
@@ -1032,6 +1143,26 @@ function addItemsFromText(text) {
             addedByName: currentUser.name,
             createdAt: now + i
         });
+
+        // обновляем статистику популярности товара для пользователя
+        const canonical = getCanonicalKeyForName(name);
+        if (canonical) {
+            const statRef = db.ref('stats/' + currentUser.id + '/products/' + canonical);
+            statRef.transaction(current => {
+                if (current === null) {
+                    return {
+                        name: canonical,
+                        count: 1,
+                        lastUsed: Date.now()
+                    };
+                }
+                return {
+                    name: current.name || canonical,
+                    count: (current.count || 0) + 1,
+                    lastUsed: Date.now()
+                };
+            });
+        }
     });
 }
 
@@ -1089,6 +1220,26 @@ function subscribeToList() {
     });
 }
 
+// подписка на статистику популярных продуктов
+function subscribeToPopularProducts() {
+    if (!currentUser) return;
+    const statsRef = db.ref('stats/' + currentUser.id + '/products');
+    statsRef.on('value', snap => {
+        const val = snap.val() || {};
+        const list = Object.values(val);
+        list.sort((a, b) => {
+            const ca = a.count || 0;
+            const cb = b.count || 0;
+            if (cb !== ca) return cb - ca;
+            const la = a.lastUsed || 0;
+            const lb = b.lastUsed || 0;
+            return lb - la;
+        });
+        popularProducts = list.slice(0, 8);
+        renderPopularButtons();
+    });
+}
+
 function loadOrCreateFamilyCode() {
     if (!currentUser) return;
     const famRef = db.ref('families/' + currentUser.familyId);
@@ -1136,6 +1287,7 @@ function initUserFromDb(userId) {
         $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
         $('onboarding').classList.add('hidden');
         subscribeToList();
+        subscribeToPopularProducts();
         loadOrCreateFamilyCode();
     });
 }
@@ -1155,9 +1307,53 @@ function setLang(lang) {
     applyTranslations();
 }
 
+// выбор фото для конкретного товара
+function startPhotoSelectForItem(itemId) {
+    if (!currentUser) return;
+    const fileInput = $('photo-input');
+    if (!fileInput) return;
+    photoTargetItemId = itemId;
+    fileInput.click();
+}
+
+// инициализация загрузки фото
+function initPhotoUpload() {
+    const fileInput = $('photo-input');
+    if (!fileInput) return;
+
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file || !currentUser || !photoTargetItemId) {
+            fileInput.value = '';
+            photoTargetItemId = null;
+            return;
+        }
+
+        const path = 'itemPhotos/' + currentUser.familyId + '/' + photoTargetItemId + '/' + Date.now() + '_' + file.name;
+        const imgRef = storage.ref().child(path);
+
+        imgRef.put(file)
+            .then(snapshot => snapshot.ref.getDownloadURL())
+            .then(url => {
+                return db.ref('lists/' + currentUser.familyId + '/items/' + photoTargetItemId)
+                    .update({ photoUrl: url });
+            })
+            .catch(err => {
+                console.error('Photo upload error', err);
+                alert('Не удалось загрузить фото');
+            })
+            .finally(() => {
+                fileInput.value = '';
+                photoTargetItemId = null;
+            });
+    });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const input = $('item-input');
     const addBtn = $('add-btn');
+
+    initPhotoUpload();
 
     // переключение режимов ✍️ / 🎤
     document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -1300,6 +1496,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
                     $('onboarding').classList.add('hidden');
                     subscribeToList();
+                    subscribeToPopularProducts();
                     db.ref('families/' + familyId + '/code').once('value').then(c => {
                         currentFamilyCode = c.val() || code;
                         showFamilyCode();
@@ -1332,6 +1529,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
                 $('onboarding').classList.add('hidden');
                 subscribeToList();
+                subscribeToPopularProducts();
                 showFamilyCode();
             });
         }
