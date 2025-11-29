@@ -1329,13 +1329,39 @@ function initPhotoUpload() {
             return;
         }
 
-        const path = 'itemPhotos/' + currentUser.familyId + '/' + photoTargetItemId + '/' + Date.now() + '_' + file.name;
+        const itemId = photoTargetItemId;
+
+        // 1) Локальное превью сразу после выбора файла
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            if (itemsMap[itemId]) {
+                itemsMap[itemId].photoUrl = dataUrl; // временное превью
+                renderList();                        // сразу перерисуем список
+            }
+        };
+        reader.readAsDataURL(file);
+
+        // 2) Загрузка в Firebase Storage
+        const path =
+            'itemPhotos/' +
+            currentUser.familyId +
+            '/' +
+            itemId +
+            '/' +
+            Date.now() +
+            '_' +
+            file.name;
+
         const imgRef = storage.ref().child(path);
 
-        imgRef.put(file)
+        imgRef
+            .put(file)
             .then(snapshot => snapshot.ref.getDownloadURL())
             .then(url => {
-                return db.ref('lists/' + currentUser.familyId + '/items/' + photoTargetItemId)
+                // сохраняем постоянный URL в базе
+                return db
+                    .ref('lists/' + currentUser.familyId + '/items/' + itemId)
                     .update({ photoUrl: url });
             })
             .catch(err => {
@@ -1348,6 +1374,7 @@ function initPhotoUpload() {
             });
     });
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
     const input = $('item-input');
@@ -1545,4 +1572,5 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
