@@ -165,6 +165,7 @@ li.bought .name {
     border-radius: 8px;
     object-fit: cover;
     flex-shrink: 0;
+    cursor: pointer; /* видно, что по картинке можно кликать */
 }
 
 .footer-buttons {
@@ -525,6 +526,7 @@ input[type="text"]:focus {
 
 <!-- скрытый инпут для выбора фото товара -->
 <input type="file" id="photo-input" accept="image/*" style="display:none" />
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
@@ -950,7 +952,6 @@ function getCanonicalKeyForName(rawName) {
     return base;
 }
 
-// РЕНДЕР СПИСКА с превью и открытием фото по клику
 function renderList() {
     const listEl = $('items-list');
     listEl.innerHTML = '';
@@ -1010,7 +1011,7 @@ function renderList() {
             thumb.className = 'item-photo-thumb';
             thumb.src = item.photoUrl;
             thumb.alt = item.name || '';
-            // по клику откроем фото крупно в новой вкладке
+            // по клику открыть фото в новой вкладке
             thumb.addEventListener('click', () => {
                 window.open(item.photoUrl, '_blank');
             });
@@ -1032,8 +1033,292 @@ function renderList() {
         listEl.appendChild(li);
     });
 }
-<script>
-/* === НОВАЯ версия initPhotoUpload — с мгновенным превью === */
+
+// рендер быстрых кнопок популярных продуктов
+function renderPopularButtons() {
+    const container = $('quick-products');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!popularProducts || popularProducts.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+
+    popularProducts.forEach(stat => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-btn';
+        const fakeItem = { name: stat.name };
+        btn.textContent = getDisplayNameForItem(fakeItem);
+        btn.addEventListener('click', () => {
+            addItemsFromText(stat.name);
+        });
+        container.appendChild(btn);
+    });
+}
+
+// разделяем строку на товары
+function splitToItems(text) {
+    if (!text) return [];
+    let normalized = text;
+
+    normalized = normalized
+        .replace(/новая строка/gi, '\n')
+        .replace(/следующая строка/gi, '\n')
+        .replace(/следующий пункт/gi, '\n')
+        .replace(/следующий/gi, '\n')
+        .replace(/enter/gi, '\n')
+        .replace(/запятая/gi, ',')
+        .replace(/comma/gi, ',')
+        .replace(/\sи\s/gi, ','); // "куриные крылышки и молоко и хлеб"
+
+    const words = normalized
+        .split(/[\s,;\n]+/)
+        .map(w => w.trim())
+        .filter(Boolean);
+
+    if (words.length === 0) return [];
+
+    const result = [];
+    let i = 0;
+
+    while (i < words.length) {
+        let used = false;
+
+        if (i + 2 < words.length) {
+            const threeKey = (words[i] + ' ' + words[i+1] + ' ' + words[i+2]).toLowerCase();
+            if (productDictionary[threeKey]) {
+                result.push(words[i] + ' ' + words[i+1] + ' ' + words[i+2]);
+                i += 3;
+                used = true;
+            }
+        }
+
+        if (!used && i + 1 < words.length) {
+            const twoKey = (words[i] + ' ' + words[i+1]).toLowerCase();
+            if (productDictionary[twoKey]) {
+                result.push(words[i] + ' ' + words[i+1]);
+                i += 2;
+                used = true;
+            }
+        }
+
+        if (!used) {
+            result.push(words[i]);
+            i += 1;
+        }
+    }
+
+    return result;
+}
+
+function addItemsFromText(text) {
+    if (!currentUser) return;
+
+    const parts = splitToItems(text);
+    if (parts.length === 0) return;
+
+    const existingNames = new Set(
+        Object.values(itemsMap || {})
+            .filter(item => !item.bought)
+            .map(item => (item.name || '').toLowerCase().trim())
+    );
+
+    const now = Date.now();
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+
+    parts.forEach((rawName, i) => {
+        const name = rawName.trim();
+        if (!name) return;
+
+        const low = name.toLowerCase();
+        if (existingNames.has(low)) return;
+        existingNames.add(low);
+
+        const ref = listRef.push();
+        ref.set({
+            name,
+            bought: false,
+            addedById: currentUser.id,
+            addedByName: currentUser.name,
+            createdAt: now + i
+        });
+
+        // статистика
+        const canonical = getCanonicalKeyForName(name);
+        if (canonical) {
+            const statRef = db.ref('stats/' + currentUser.id + '/products/' + canonical);
+            statRef.transaction(current => {
+                if (current === null) {
+                    return {
+                        name: canonical,
+                        count: 1,
+                        lastUsed: Date.now()
+                    };
+                }
+                return {
+                    name: current.name || canonical,
+                    count: (current.count || 0) + 1,
+                    lastUsed: Date.now()
+                };
+            });
+        }
+    });
+}
+
+function updateAddButtonState() {
+    const input = $('item-input');
+    const addBtn = $('add-btn');
+    addBtn.disabled = input.value.trim().length === 0;
+}
+
+function autoAddFromInput() {
+    autoAddTimer = null;
+    const input = $('item-input');
+    const text = input.value.trim();
+    if (!text) return;
+    addItemsFromText(text);
+    input.value = '';
+    updateAddButtonState();
+}
+
+function toggleItem(id, item) {
+    if (!currentUser) return;
+    const ref = db.ref('lists/' + currentUser.familyId + '/items/' + id);
+    ref.update({ bought: !item.bought });
+}
+
+function deleteItem(id) {
+    if (!currentUser) return;
+    const ref = db.ref('lists/' + currentUser.familyId + '/items/' + id);
+    ref.remove();
+}
+
+function clearBought() {
+    if (!currentUser) return;
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+    Object.keys(itemsMap).forEach(id => {
+        if (itemsMap[id].bought) {
+            listRef.child(id).remove();
+        }
+    });
+}
+
+function clearAll() {
+    if (!currentUser) return;
+    if (!confirm('Delete all items?')) return;
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+    listRef.remove();
+}
+
+function subscribeToList() {
+    if (!currentUser) return;
+    const listRef = db.ref('lists/' + currentUser.familyId + '/items');
+    listRef.on('value', snap => {
+        itemsMap = snap.val() || {};
+        renderList();
+    });
+}
+
+// подписка на статистику популярных продуктов
+function subscribeToPopularProducts() {
+    if (!currentUser) return;
+    const statsRef = db.ref('stats/' + currentUser.id + '/products');
+    statsRef.on('value', snap => {
+        const val = snap.val() || {};
+        const list = Object.values(val);
+        list.sort((a, b) => {
+            const ca = a.count || 0;
+            const cb = b.count || 0;
+            if (cb !== ca) return cb - ca;
+            const la = a.lastUsed || 0;
+            const lb = b.lastUsed || 0;
+            return lb - la;
+        });
+        popularProducts = list.slice(0, 8);
+        renderPopularButtons();
+    });
+}
+
+function loadOrCreateFamilyCode() {
+    if (!currentUser) return;
+    const famRef = db.ref('families/' + currentUser.familyId);
+    famRef.once('value').then(snap => {
+        const val = snap.val();
+        if (val && val.code) {
+            currentFamilyCode = val.code;
+            showFamilyCode();
+        } else {
+            const code = generateFamilyCode();
+            currentFamilyCode = code;
+            const updates = {};
+            updates['families/' + currentUser.familyId] = {
+                code,
+                ownerId: currentUser.id,
+                createdAt: Date.now()
+            };
+            updates['familyCodes/' + code] = currentUser.familyId;
+            db.ref().update(updates).then(showFamilyCode);
+        }
+    });
+}
+
+function showFamilyCode() {
+    if (!currentFamilyCode) return;
+    $('family-code-line').style.display = 'block';
+    $('family-code-box').textContent = currentFamilyCode;
+}
+
+function initUserFromDb(userId) {
+    db.ref('users/' + userId).once('value').then(snap => {
+        if (!snap.exists()) {
+            showOnboarding();
+            return;
+        }
+        const data = snap.val();
+        currentUser = {
+            id: userId,
+            name: data.name || 'User',
+            language: data.language || 'ru',
+            familyId: data.familyId
+        };
+        currentLang = currentUser.language;
+        applyTranslations();
+        $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
+        $('onboarding').classList.add('hidden');
+        subscribeToList();
+        subscribeToPopularProducts();
+        loadOrCreateFamilyCode();
+    });
+}
+
+function showOnboarding() {
+    $('onboarding').classList.remove('hidden');
+    $('lang-step').style.display = 'block';
+    $('setup-step').style.display = 'none';
+    $('ob-error').style.display = 'none';
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    applyTranslations();
+}
+
+// выбор фото для конкретного товара
+function startPhotoSelectForItem(itemId) {
+    if (!currentUser) return;
+    const fileInput = $('photo-input');
+    if (!fileInput) return;
+    photoTargetItemId = itemId;
+    fileInput.click();
+}
+
+// загрузка фото в Firebase Storage (без временного превью)
 function initPhotoUpload() {
     const fileInput = $('photo-input');
     if (!fileInput) return;
@@ -1047,19 +1332,6 @@ function initPhotoUpload() {
         }
 
         const itemId = photoTargetItemId;
-
-        // 1) локальное мгновенное превью
-        const reader = new FileReader();
-        reader.onload = () => {
-            const dataUrl = reader.result;
-            if (itemsMap[itemId]) {
-                itemsMap[itemId].photoUrl = dataUrl;
-                renderList();
-            }
-        };
-        reader.readAsDataURL(file);
-
-        // 2) загрузка в Firebase Storage
         const path =
             'itemPhotos/' +
             currentUser.familyId +
@@ -1091,103 +1363,13 @@ function initPhotoUpload() {
     });
 }
 
-/* === renderList — обновлённая версия с кликом по миниатюре === */
-function renderList() {
-    const listEl = $('items-list');
-    listEl.innerHTML = '';
-
-    const dict = translations[currentLang] || translations.en;
-    const keys = Object.keys(itemsMap);
-
-    if (keys.length === 0) {
-        const li = document.createElement('li');
-        li.innerHTML = `<span class="name" style="color:#999;">${dict.listEmpty}</span>`;
-        listEl.appendChild(li);
-        return;
-    }
-
-    keys.sort((a, b) => {
-        const ta = itemsMap[a].createdAt || 0;
-        const tb = itemsMap[b].createdAt || 0;
-        return ta - tb;
-    });
-
-    keys.forEach(id => {
-        const item = itemsMap[id];
-        const li = document.createElement('li');
-        if (item.bought) li.classList.add('bought');
-
-        const checkbox = document.createElement('div');
-        checkbox.className = 'checkbox' + (item.bought ? ' checked' : '');
-        checkbox.innerHTML = item.bought ? '✓' : '';
-        checkbox.addEventListener('click', () => toggleItem(id, item));
-
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'name';
-        nameSpan.textContent = getDisplayNameForItem(item);
-
-        const metaSpan = document.createElement('span');
-        metaSpan.className = 'meta';
-        if (item.addedByName) {
-            metaSpan.textContent = dict.addedBy(item.addedByName);
-        }
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn-delete';
-        delBtn.textContent = '✕';
-        delBtn.addEventListener('click', () => deleteItem(id));
-
-        const left = document.createElement('div');
-        left.style.flex = '1';
-        left.style.display = 'flex';
-        left.style.flexDirection = 'column';
-        left.appendChild(nameSpan);
-        if (item.addedByName) left.appendChild(metaSpan);
-
-        // === мини-превью ===
-        let thumb = null;
-        if (item.photoUrl) {
-            thumb = document.createElement('img');
-            thumb.className = 'item-photo-thumb';
-            thumb.src = item.photoUrl;
-            thumb.alt = item.name || '';
-            thumb.addEventListener('click', () => {
-                window.open(item.photoUrl, '_blank');
-            });
-        }
-
-        const photoBtn = document.createElement('button');
-        photoBtn.className = 'btn-photo';
-        photoBtn.textContent = '📷';
-        photoBtn.title = 'Добавить / изменить фото';
-        photoBtn.addEventListener('click', () => {
-            startPhotoSelectForItem(id);
-        });
-
-        li.appendChild(checkbox);
-        if (thumb) li.appendChild(thumb);
-        li.appendChild(left);
-        li.appendChild(photoBtn);
-        li.appendChild(delBtn);
-        listEl.appendChild(li);
-    });
-}
-
-/* === конец renderList === */
-
-
-/* === ОБРАБОТКА ВЕСЬ ОСТАЛЬНЫЙ КОД ДО DOMContentLoaded (этот кусок у тебя уже был, он остаётся как есть) === */
-
-
-/* === САМА ФИНАЛЬНАЯ ЧАСТЬ — DOMContentLoaded === */
-
 window.addEventListener('DOMContentLoaded', () => {
     const input = $('item-input');
     const addBtn = $('add-btn');
 
-    initPhotoUpload();  // <-- наша новая функция
+    initPhotoUpload();
 
-    // режимы ✍️ и 🎤
+    // переключение режимов ✍️ / 🎤
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             currentMode = btn.dataset.mode;
@@ -1202,12 +1384,13 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ввод в поле
     input.addEventListener('input', () => {
         updateAddButtonState();
         if (autoAddTimer) clearTimeout(autoAddTimer);
 
         if (currentMode === 'voice' && input.value.trim().length > 0) {
-            autoAddTimer = setTimeout(autoAddFromInput, 5000);
+            autoAddTimer = setTimeout(autoAddFromInput, 5000); // 5 секунд пауза
         }
     });
 
@@ -1225,40 +1408,37 @@ window.addEventListener('DOMContentLoaded', () => {
     $('clear-bought-btn').addEventListener('click', clearBought);
     $('clear-all-btn').addEventListener('click', clearAll);
 
-    // кнопка поделиться
+    // Кнопка "Поделиться приложением"
     const shareBtn = document.getElementById('share-btn');
     if (shareBtn) {
         if (navigator.share) {
             shareBtn.addEventListener('click', () => {
                 navigator.share({
                     title: 'Shopping App',
-                    text: 'Общий список покупок',
+                    text: 'Общий список покупок для семьи',
                     url: window.location.href
                 }).catch(() => {});
             });
-        } else if (navigator.clipboard) {
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
             shareBtn.addEventListener('click', () => {
                 navigator.clipboard.writeText(window.location.href)
-                    .then(() => alert('Ссылка скопирована'))
-                    .catch(() => alert('Не удалось скопировать'));
+                    .then(() => alert('Ссылка на приложение скопирована'))
+                    .catch(() => alert('Не удалось скопировать ссылку'));
             });
         } else {
             shareBtn.addEventListener('click', () => {
-                prompt('Скопируй ссылку:', window.location.href);
+                prompt('Скопируй ссылку на приложение:', window.location.href);
             });
         }
     }
 
-    // выбор языка + онбординг
     document.querySelectorAll('.flag-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.flag-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             const lang = btn.dataset.lang;
             currentLang = lang;
             setLang(lang);
-
             $('lang-step').style.display = 'none';
             $('setup-step').style.display = 'block';
         });
@@ -1275,7 +1455,7 @@ window.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', () => {
             if (radio.value === 'join' && radio.checked) {
                 codeInput.style.display = 'block';
-            } else {
+            } else if (radio.value === 'create' && radio.checked) {
                 codeInput.style.display = 'none';
             }
         });
@@ -1289,7 +1469,6 @@ window.addEventListener('DOMContentLoaded', () => {
             $('ob-error').style.display = 'block';
             return;
         }
-
         const mode = document.querySelector('input[name="family-mode"]:checked').value;
         const isJoin = mode === 'join';
         let code = $('ob-family-code').value.trim().toUpperCase();
@@ -1336,7 +1515,6 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             const familyId = randomId('f_');
             const familyCode = generateFamilyCode();
-
             const userData = {
                 name,
                 language: currentLang,
@@ -1356,11 +1534,9 @@ window.addEventListener('DOMContentLoaded', () => {
             db.ref().update(updates).then(() => {
                 currentUser = { id: userId, ...userData };
                 currentFamilyCode = familyCode;
-
                 applyTranslations();
                 $('user-info').textContent = (translations[currentLang] || translations.en).userInfo(currentUser.name);
                 $('onboarding').classList.add('hidden');
-
                 subscribeToList();
                 subscribeToPopularProducts();
                 showFamilyCode();
@@ -1376,7 +1552,5 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-
 </body>
 </html>
-
