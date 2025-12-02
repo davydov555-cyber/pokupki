@@ -165,7 +165,7 @@ li.bought .name {
     border-radius: 8px;
     object-fit: cover;
     flex-shrink: 0;
-    cursor: pointer; /* видно, что по картинке можно кликать */
+    cursor: pointer;
 }
 
 .footer-buttons {
@@ -650,11 +650,11 @@ const productDictionary = {
     "omenat": { ru: "яблоки", en: "apples", fi: "omenat" },
 
     // БАНАНЫ
-    "банан": { ru: "банан", en: "banana", fi: "banaani" },
+    "банан": { ru: "банан", en: "banana", fi: "banaани" },
     "бананы": { ru: "бананы", en: "bananas", fi: "banaanit" },
-    "banana": { ru: "банан", en: "banana", fi: "banaani" },
+    "banana": { ru: "банан", en: "banana", fi: "banaани" },
     "bananas": { ru: "бананы", en: "bananas", fi: "banaanit" },
-    "banaani": { ru: "банан", en: "banana", fi: "banaani" },
+    "banaани": { ru: "банан", en: "banana", fi: "banaани" },
     "banaanit": { ru: "бананы", en: "bananas", fi: "banaanit" },
 
     // АПЕЛЬСИНЫ
@@ -668,10 +668,10 @@ const productDictionary = {
     // ЛИМОН
     "лимон": { ru: "лимон", en: "lemon", fi: "sitruuna" },
     "лимоны": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
-    "lemon": { ru: "лимон", en: "lemon", fi: "sitruuna" },
-    "lemons": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
-    "sitruuna": { ru: "лимон", en: "lemon", fi: "sitruuna" },
-    "sitruunat": { ru: "лимоны", en: "lemons", fi: "sitruunat" },
+    "lemon": { ru: "лимон", en: "lemon", fi: "sitруuna" },
+    "lemons": { ru: "лимоны", en: "lemons", fi: "sitруunат" },
+    "sitruuna": { ru: "лимон", en: "lemon", fi: "sitруuna" },
+    "sitруunat": { ru: "лимоны", en: "lemons", fi: "sitруunат" },
 
     // СЫР
     "сыр": { ru: "сыр", en: "cheese", fi: "juusto" },
@@ -781,8 +781,8 @@ const productDictionary = {
 
     // ВОДА / СОК
     "вода": { ru: "вода", en: "water", fi: "vesi" },
-    "water": { ru: "вода", en: "water", fi: "vesi" },
-    "vesi": { ru: "вода", en: "water", fi: "vesi" },
+    "water": { ru: "вода", en: "water", fi: "vesи" },
+    "vesи": { ru: "вода", en: "water", fi: "vesи" },
 
     "минеральная вода": { ru: "минеральная вода", en: "mineral water", fi: "kivennäisvesi" },
     "mineral water": { ru: "минеральная вода", en: "mineral water", fi: "kivennäisvesi" },
@@ -1011,7 +1011,7 @@ function renderList() {
             thumb.className = 'item-photo-thumb';
             thumb.src = item.photoUrl;
             thumb.alt = item.name || '';
-            // по клику открыть фото в новой вкладке
+            // открыть в новой вкладке
             thumb.addEventListener('click', () => {
                 window.open(item.photoUrl, '_blank');
             });
@@ -1318,13 +1318,14 @@ function startPhotoSelectForItem(itemId) {
     fileInput.click();
 }
 
-// загрузка фото в Firebase Storage (без временного превью)
+// загрузка фото: мгновенное превью + сохранение в Firebase
 function initPhotoUpload() {
     const fileInput = $('photo-input');
     if (!fileInput) return;
 
     fileInput.addEventListener('change', () => {
         const file = fileInput.files[0];
+
         if (!file || !currentUser || !photoTargetItemId) {
             fileInput.value = '';
             photoTargetItemId = null;
@@ -1332,15 +1333,24 @@ function initPhotoUpload() {
         }
 
         const itemId = photoTargetItemId;
+
+        // 1) Мгновенное превью через FileReader
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            if (itemsMap[itemId]) {
+                itemsMap[itemId].photoUrl = dataUrl;
+                renderList();
+            }
+        };
+        reader.readAsDataURL(file);
+
+        // 2) Загрузка в Firebase Storage и сохранение постоянной ссылки
         const path =
             'itemPhotos/' +
-            currentUser.familyId +
-            '/' +
-            itemId +
-            '/' +
-            Date.now() +
-            '_' +
-            file.name;
+            currentUser.familyId + '/' +
+            itemId + '/' +
+            Date.now() + '_' + file.name;
 
         const imgRef = storage.ref().child(path);
 
@@ -1554,3 +1564,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
